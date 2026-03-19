@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PantryPal</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+    <h1>🍳 PantryPal</h1>
+    <p>Find recipes with what you already have</p>
+</header>
+
+<main>
+
+    <!-- Ingredient Input -->
+    <section class="card">
+        <h2>Add Ingredients</h2>
+        <input type="text" id="ingredientInput" placeholder="Enter ingredient">
+        <button onclick="addIngredient()">Add</button>
+
+        <ul id="ingredientList"></ul>
+    </section>
+
+    <!-- Recipe Search -->
+    <section class="card">
+        <h2>Find Recipes</h2>
+        <button onclick="findRecipes()">Search Recipes</button>
+    </section>
+
+    <!-- Recipe Results -->
+    <section class="card">
+        <h2>Recipes</h2>
+        <div id="recipeResults">
+            <p>No recipes yet...</p>
+        </div>
+    </section>
+
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
