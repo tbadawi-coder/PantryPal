@@ -1,4 +1,5 @@
 # PantryPal
+# PantryPal
 
 PantryPal is a web application that helps users find recipes based on ingredients they already have.
 
