@@ -62,4 +62,46 @@ li {
     margin: 10px;
     padding: 15px;
     border-radius: 10px;
+
+}
+
+.recipe-detail-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.recipe-detail-card img {
+    border-radius: 10px;
+    display: block;
+    margin-bottom: 20px;
+}
+
+.recipe-detail-card ul {
+    margin-bottom: 20px;
+}
+
+.recipe-detail-card p {
+    line-height: 1.8;
+    white-space: pre-line;
+}
+
+.ingredient-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.delete-btn {
+    opacity: 0;
+    cursor: pointer;
+    color: #757575;
+    font-size: 12px;
+    transition: opacity 0.2s ease;
+}
+
+.ingredient-item:hover .delete-btn {
+    opacity: 1;
 }
