@@ -1,4 +1,18 @@
 let ingredients = JSON.parse(localStorage.getItem("ingredients")) || [];
+ingredients = ingredients
+    .map((i) => String(i).trim())
+    .filter((i) => i !== "");
+localStorage.setItem("ingredients", JSON.stringify(ingredients));
+
+function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    }[c]));
+}
 
 // Add ingredient
 function addIngredient() {
@@ -22,8 +36,8 @@ function displayIngredients() {
         const li = document.createElement("li");
         li.classList.add("ingredient-item");
         li.innerHTML = `
-            ${item}
-            <span class="delete-btn" onclick="deleteIngredient(${index})">✕</span>
+            <span class="ingredient-text">${escapeHtml(item)}</span>
+            <span class="delete-btn" onclick="deleteIngredient(${index})" aria-label="Delete ingredient">✕</span>
         `;
         list.appendChild(li);
     });
@@ -45,23 +59,24 @@ async function fetchRecipes() {
     const results = document.getElementById("recipeResults");
     if (!results) return;
     if (ingredients.length === 0) {
-        results.innerHTML = "<p>No ingredients provided.</p>";
+        results.innerHTML = "<p class='muted'>No ingredients provided.</p>";
         return;
     }
 
     try {
         // Make a separate API call for each ingredient
         const fetchPromises = ingredients.map(ingredient =>
-            fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredient}`)
+            fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(ingredient)}`)
                 .then(res => res.json())
         );
 
         const allResults = await Promise.all(fetchPromises);
 
         // Get meal IDs from each ingredient's results
-        const mealIdSets = allResults.map(data =>
-            data.meals ? new Set(data.meals.map(m => m.idMeal)) : new Set()
-        );
+        const mealIdSets = allResults.map(data => {
+            const meals = data && data.meals ? data.meals : [];
+            return new Set(meals.map(m => m.idMeal));
+        });
 
         // Find meals that appear in ALL ingredient results (intersection)
         const commonIds = [...mealIdSets[0]].filter(id =>
@@ -69,31 +84,39 @@ async function fetchRecipes() {
         );
 
         if (commonIds.length === 0) {
-            results.innerHTML = "<p>No recipes found matching all ingredients.</p>";
+            results.innerHTML = "<p class='muted'>No recipes found matching all ingredients.</p>";
             return;
         }
 
         // Get meal details from first result that matched
-        const allMeals = allResults[0].meals.filter(m => commonIds.includes(m.idMeal));
+        const mealsForCards = (allResults[0] && allResults[0].meals) ? allResults[0].meals : [];
+        const allMeals = mealsForCards.filter(m => commonIds.includes(m.idMeal));
 
         results.innerHTML = "";
         allMeals.forEach(meal => {
     const div = document.createElement("div");
     div.classList.add("recipe-card");
-    div.style.cursor = "pointer";
     div.innerHTML = `
-        <h3>${meal.strMeal}</h3>
-        <img src="${meal.strMealThumb}" width="200">
+        <h3>${escapeHtml(meal.strMeal)}</h3>
+        <img src="${meal.strMealThumb}" alt="${escapeHtml(meal.strMeal)}" loading="lazy">
     `;
-    div.addEventListener("click", () => {
+    const openRecipe = () => {
         localStorage.setItem("selectedMealId", meal.idMeal);
         window.location.href = "recipe.html";
+    };
+    div.addEventListener("click", openRecipe);
+    div.tabIndex = 0;
+    div.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openRecipe();
+        }
     });
     results.appendChild(div);
 });
 
     } catch (error) {
-        results.innerHTML = "<p>Error fetching recipes.</p>";
+        results.innerHTML = "<p class='muted'>Error fetching recipes.</p>";
         console.error(error);
     }
 }

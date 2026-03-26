@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pantry</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -8,17 +10,25 @@
 
 <header>
     <h1>Your Pantry</h1>
+    <p class="muted">Add what you have, then get recipe ideas.</p>
 </header>
 
-<main>
+<main class="page">
+    <div class="card">
+        <h2>Add ingredients</h2>
 
-    <input type="text" id="ingredientInput" placeholder="Enter ingredient">
-    <button onclick="addIngredient()">Add</button>
+        <div class="field-row">
+            <label class="sr-only" for="ingredientInput">Ingredient</label>
+            <input type="text" id="ingredientInput" placeholder="Enter ingredient (e.g. chicken)" autocomplete="off">
+            <button type="button" onclick="addIngredient()">Add</button>
+        </div>
 
-    <ul id="ingredientList"></ul>
+        <ul id="ingredientList"></ul>
 
-    <button onclick="goToResults()">Find Recipes</button>
-
+        <div class="actions">
+            <button type="button" onclick="goToResults()">Find Recipes</button>
+        </div>
+    </div>
 </main>
 
 <script src="script.js"></script>
