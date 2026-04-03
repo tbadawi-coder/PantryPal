@@ -1,17 +1,20 @@
 const express = require('express');
 const controller = require('../controller/userController');
+const { isGuest, isLoggedIn } = require('../middleware/auth');
+const {validateLogIn, validateSignUp, validateResult} = require('../middleware/validator');
+
 
 const router = express.Router();
 
-router.get('/new', controller.newUser)
+router.get('/new', isGuest, controller.newUser)
 
-router.post('/', controller.createUser)
+router.post('/',isGuest, validateSignUp, validateResult, controller.createUser)
 
-router.get('/login', controller.loginForm)
+router.get('/login',isGuest, controller.loginForm)
 
-router.post('/login', controller.login)
+router.post('/login', isGuest, validateLogIn, validateResult, controller.login)
 
-router.get('/logout', controller.logout)
+router.get('/logout', isLoggedIn, controller.logout)
 
 
 module.exports = router;
