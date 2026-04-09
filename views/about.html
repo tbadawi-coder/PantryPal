@@ -17,7 +17,10 @@
             <li><a href="results.html" data-page="results">Results</a></li>
             <li><a href="about.html" data-page="about">About</a></li>
         </ul>
-        <button type="button" class="nav-back-btn" onclick="window.history.back()">← Back</button>
+        <div class="nav-actions">
+            <button type="button" class="auth-btn auth-btn-secondary">Sign In</button>
+            <button type="button" class="auth-btn">Sign Up</button>
+        </div>
     </nav>
     <div class="hero-header">
         <h1>About Us</h1>
@@ -29,7 +32,7 @@
     <section class="card center-text">
         <h2>Our mission</h2>
         <p>
-            Pantry Pal is here to solve your common household culinary challenges! Food waste is a big issue, ingredients often sit in the pantry and expire before they’re used. People also struggle to decide what to cook with what they have, and manually searching for recipes can be time consuming and frustrating. On top of that, missing ingredients often leads to extra grocery trips, wasting time, food, and money. Pantry Pal solves these problems by suggesting recipes based on the ingredients users already have, helping save time, reduce waste, and simplify meal planning.
+            PantryPal is here to solve your common household culinary challenges! Food waste is a big issue, ingredients often sit in the pantry and expire before they’re used. People also struggle to decide what to cook with what they have, and manually searching for recipes can be time consuming and frustrating. On top of that, missing ingredients often leads to extra grocery trips, wasting time, food, and money. Pantry Pal solves these problems by suggesting recipes based on the ingredients users already have, helping save time, reduce waste, and simplify meal planning.
         </p>
     </section>
 
@@ -68,6 +71,9 @@
         </div>
     </section>
 </main>
+<div class="page-back page">
+    <button type="button" class="bottom-back-btn" onclick="window.history.back()">← Back</button>
+</div>
 
 <script>
     (function () {

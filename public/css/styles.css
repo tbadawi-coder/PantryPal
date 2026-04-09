@@ -88,17 +88,49 @@ header {
     font-weight: 700;
 }
 
-.nav-back-btn {
+.nav-actions {
     margin-left: auto;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.4);
+    display: flex;
+    gap: 8px;
+}
+
+.auth-btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: #0f172a;
+    border-color: rgba(255, 255, 255, 0.9);
     font-size: 0.9rem;
     padding-inline: 12px;
 }
 
-.nav-back-btn:hover {
-    background: rgba(255, 255, 255, 0.16);
+.auth-btn:hover {
+    background: #fff;
+}
+
+.auth-btn-secondary {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.38);
+}
+
+.auth-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.page-back {
+    padding-top: 0;
+    padding-bottom: 26px;
+    display: flex;
+    justify-content: center;
+}
+
+.bottom-back-btn {
+    background: rgba(15, 23, 42, 0.08);
+    color: var(--text);
+    border-color: rgba(15, 23, 42, 0.16);
+}
+
+.bottom-back-btn:hover {
+    background: rgba(15, 23, 42, 0.14);
 }
 
 .hero-header {
@@ -450,6 +482,11 @@ a.btn:hover {
         width: 100%;
         justify-content: space-between;
         flex-wrap: wrap;
+    }
+
+    .nav-actions {
+        width: 100%;
+        margin-left: 0;
     }
 
     .field-row {

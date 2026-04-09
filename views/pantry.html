@@ -17,7 +17,10 @@
             <li><a href="results.html" data-page="results">Results</a></li>
             <li><a href="about.html" data-page="about">About</a></li>
         </ul>
-        <button type="button" class="nav-back-btn" onclick="window.history.back()">← Back</button>
+        <div class="nav-actions">
+            <button type="button" class="auth-btn auth-btn-secondary">Sign In</button>
+            <button type="button" class="auth-btn">Sign Up</button>
+        </div>
     </nav>
     <div class="hero-header">
         <h1>Your Pantry</h1>
@@ -42,6 +45,9 @@
         </div>
     </div>
 </main>
+<div class="page-back page">
+    <button type="button" class="bottom-back-btn" onclick="window.history.back()">← Back</button>
+</div>
 
 <script>
     (function () {
