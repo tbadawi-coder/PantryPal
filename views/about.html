@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    <link rel="stylesheet" href="../public/css/styles.css">
+</head>
+<body>
+
+<header>
+    <nav class="nav">
+        <a href="index.html" class="nav-logo">🍳 PantryPal</a>
+        <ul class="nav-links">
+            <li><a href="index.html" data-page="home">Home</a></li>
+            <li><a href="pantry.html" data-page="pantry">Pantry</a></li>
+            <li><a href="results.html" data-page="results">Results</a></li>
+            <li><a href="about.html" data-page="about">About</a></li>
+        </ul>
+        <button type="button" class="nav-back-btn" onclick="window.history.back()">← Back</button>
+    </nav>
+    <div class="hero-header">
+        <h1>About Us</h1>
+        <p class="muted">Why PantryPal exists.</p>
+    </div>
+</header>
+
+<main class="page">
+    <section class="card center-text">
+        <h2>Our mission</h2>
+        <p>
+            Pantry Pal is here to solve your common household culinary challenges! Food waste is a big issue, ingredients often sit in the pantry and expire before they’re used. People also struggle to decide what to cook with what they have, and manually searching for recipes can be time consuming and frustrating. On top of that, missing ingredients often leads to extra grocery trips, wasting time, food, and money. Pantry Pal solves these problems by suggesting recipes based on the ingredients users already have, helping save time, reduce waste, and simplify meal planning.
+        </p>
+    </section>
+
+    <section class="card team-section">
+        <h2 class="center-text">Meet the team!</h2>
+        <div class="team-grid">
+            <article class="team-card">
+                <div class="team-photo" aria-hidden="true">Image</div>
+                <h3>Tasnim Badawi</h3>
+                <p class="muted">Project Manager</p>
+            </article>
+
+            <article class="team-card">
+                <div class="team-photo" aria-hidden="true">Image</div>
+                <h3>Aidan Santamaria</h3>
+                <p class="muted">Front End Developer</p>
+            </article>
+
+            <article class="team-card">
+                <div class="team-photo" aria-hidden="true">Image</div>
+                <h3>Jeanette Camas-Callejas</h3>
+                <p class="muted">Backend Developer</p>
+            </article>
+
+            <article class="team-card">
+                <div class="team-photo" aria-hidden="true">Image</div>
+                <h3>Meenu Kalaiselvan Kavitha</h3>
+                <p class="muted">Database Engineer</p>
+            </article>
+
+            <article class="team-card">
+                <div class="team-photo" aria-hidden="true">Image</div>
+                <h3>Nisna Tanna</h3>
+                <p class="muted">DevOps Engineer</p>
+            </article>
+        </div>
+    </section>
+</main>
+
+<script>
+    (function () {
+        const current = "about";
+        document.querySelectorAll('.nav-links a[data-page="' + current + '"]')
+            .forEach(function (link) {
+                link.classList.add('active');
+            });
+    })();
+</script>
+
+</body>
+</html>
