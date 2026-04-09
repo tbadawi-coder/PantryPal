@@ -8,12 +8,32 @@
 </head>
 <body>
 <header>
-    <h1 id="recipeTitle">Loading...</h1>
-    <a class="btn btn-secondary" href="results.html">← Back to Results</a>
+    <nav class="nav">
+        <a href="index.html" class="nav-logo">🍳 PantryPal</a>
+        <ul class="nav-links">
+            <li><a href="index.html" data-page="home">Home</a></li>
+            <li><a href="pantry.html" data-page="pantry">Pantry</a></li>
+            <li><a href="results.html" data-page="results">Results</a></li>
+        </ul>
+        <button type="button" class="nav-back-btn" onclick="window.history.back()">← Back</button>
+    </nav>
+    <div class="hero-header">
+        <h1 id="recipeTitle">Loading...</h1>
+        <a class="btn btn-secondary" href="results.html">← Back to Results</a>
+    </div>
 </header>
 <main id="recipeDetail" class="page">
     <p class="muted">Loading recipe...</p>
 </main>
+<script>
+    (function () {
+        const current = "results";
+        document.querySelectorAll('.nav-links a[data-page="' + current + '"]')
+            .forEach(function (link) {
+                link.classList.add('active');
+            });
+    })();
+</script>
 <script src="recipe.js"></script>
 </body>
 </html>

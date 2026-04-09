@@ -9,8 +9,19 @@
 <body>
 
 <header>
-    <h1>Your Pantry</h1>
-    <p class="muted">Add what you have, then get recipe ideas.</p>
+    <nav class="nav">
+        <a href="index.html" class="nav-logo">🍳 PantryPal</a>
+        <ul class="nav-links">
+            <li><a href="index.html" data-page="home">Home</a></li>
+            <li><a href="pantry.html" data-page="pantry">Pantry</a></li>
+            <li><a href="results.html" data-page="results">Results</a></li>
+        </ul>
+        <button type="button" class="nav-back-btn" onclick="window.history.back()">← Back</button>
+    </nav>
+    <div class="hero-header">
+        <h1>Your Pantry</h1>
+        <p class="muted">Add what you have, then get recipe ideas.</p>
+    </div>
 </header>
 
 <main class="page">
@@ -30,6 +41,16 @@
         </div>
     </div>
 </main>
+
+<script>
+    (function () {
+        const current = "pantry";
+        document.querySelectorAll('.nav-links a[data-page="' + current + '"]')
+            .forEach(function (link) {
+                link.classList.add('active');
+            });
+    })();
+</script>
 
 <script src="script.js"></script>
 </body>

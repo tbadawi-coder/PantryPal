@@ -30,17 +30,91 @@ body {
 header {
     background: linear-gradient(135deg, var(--brand), var(--brand-accent));
     color: white;
-    text-align: center;
-    padding: 24px 16px;
+    padding: 16px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.28);
 }
 
-header h1 {
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.nav-logo {
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    color: white;
+    text-decoration: none;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 18px;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links a {
+    color: rgba(255, 255, 255, 0.92);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    position: relative;
+    padding-bottom: 4px;
+}
+
+.nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    transition: width 0.18s ease;
+}
+
+.nav-links a:hover::after {
+    width: 100%;
+}
+
+.nav-links a.active {
+    font-weight: 700;
+}
+
+.nav-back-btn {
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+    padding-inline: 12px;
+}
+
+.nav-back-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.hero-header {
+    text-align: center;
+    padding: 16px 16px 8px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.hero-header h1 {
     margin: 0;
     font-size: clamp(1.5rem, 3.2vw, 2.2rem);
     letter-spacing: -0.02em;
 }
 
-header p {
+.hero-header p {
     margin: 10px 0 0;
     opacity: 0.95;
 }
@@ -293,6 +367,17 @@ a.btn:hover {
 }
 
 @media (max-width: 720px) {
+    .nav {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-links {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
     .field-row {
         flex-direction: column;
         align-items: stretch;
