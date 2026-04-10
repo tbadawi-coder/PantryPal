@@ -49,6 +49,22 @@ app.use(methodOverride('_method'));
 app.get('/' , (req, res) => {
     res.sendFile(__dirname + '/views/index.html')
 })
+
+app.get('/pantry.html', (req, res) => {
+    res.sendFile(__dirname + '/views/pantry.html')
+})
+
+app.get('/results.html', (req, res) => {
+    res.sendFile(__dirname + '/views/results.html')
+})
+
+app.get('/recipe.html', (req, res) => {
+    res.sendFile(__dirname + '/views/recipe.html')
+})
+
+app.get('/about.html', (req, res) => {
+    res.sendFile(__dirname + '/views/about.html')
+})
 //  I only did users for now - we can implement the others if we want to use the mvc style 
 app.get('/api/me', async (req, res) => {
     if (!req.session.user) return res.json({ loggedIn: false });
