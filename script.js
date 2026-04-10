@@ -14,12 +14,16 @@ function escapeHtml(text) {
     }[c]));
 }
 
+function normalizeIngredient(text) {
+    return String(text).trim().toLowerCase();
+}
+
 // Add ingredient
 function addIngredient() {
     const input = document.getElementById("ingredientInput");
     if (!input) return;
 
-    const value = input.value.trim().toLowerCase();
+    const value = normalizeIngredient(input.value);
 
     if (value !== "" && !ingredients.includes(value)) {
         ingredients.push(value);
@@ -58,6 +62,18 @@ function goToResults() {
     window.location.href = "results.html";
 }
 
+//Extract the full ingredient list from the MealDB API response
+function extractIngredients(meal) {
+    const recipeIngredients = [];
+    for (let i = 1; i <= 20; i++) {
+        const ingredient = meal[`strIngredient${i}`];
+        if (ingredient && ingredient.trim() !== "") {
+            recipeIngredients.push(normalizeIngredient(ingredient));
+        }
+    }
+    return recipeIngredients;
+}
+
 // Fetch recipes from MealDB using multiple ingredients
 async function fetchRecipes() {
     const results = document.getElementById("recipeResults");
@@ -72,62 +88,104 @@ async function fetchRecipes() {
 
     try {
 
-        // Make a separate API call for each ingredient
-        const fetchPromises = ingredients.map((ingredient) =>
+        // Find candidate recipes with each pantry ingredient being used
+        const candidateFetches = ingredients.map((ingredient) =>
             fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(ingredient)}`)
                 .then((res) => {
                     if (!res.ok) {
-                        throw new Error('Request failed for ingredient: ${ingredient}');
+                        throw new Error('Failed to fetch recipes for ingredient: ${ingredient}');
                     }
                     return res.json();
                 })
         );
 
-        const allResults = await Promise.all(fetchPromises);
-        //Count how many ingredients searches each meal appears
-        const mealMap = {};
+        const candidateResults = await Promise.all(candidateFetches);
+        
+        //Build set of candidate meals
+        const candidateMealMap = {};
 
-        allResults.forEach((data) => {
+        candidateResults.forEach((data) => {
             if(!data.meals) return;
             data.meals.forEach(meal => {
-                if (!mealMap[meal.idMeal]) {
-                    mealMap[meal.idMeal] = { meal: meal, count: 1 };
-                } else {
-                    mealMap[meal.idMeal].count++;
+                if (!candidateMealMap[meal.idMeal]) {
+                    candidateMealMap[meal.idMeal] = { meal: meal, count: 1 };
                 }
             });
         });
 
-        const mealsArray = Object.values(mealMap);
+        const candidateMeals = Object.values(candidateMealMap);
 
-        if (mealsArray.length === 0) {
+        if (candidateMeals.length === 0) {
             results.innerHTML = "<p class='muted'>No recipes found.</p>";
             return;
         }
 
-        //Sorting by highest count of ingredient matches
-        mealsArray.sort((a, b) => b.count - a.count);
+        //Fetch full details for each candidate recipes to count ingredient matches
+        const detailFetches = candidateMeals.map((item) =>
+            fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${item.meal.idMeal}`)
+                .then((res) => {
+                    if (!res.ok) {
+                        throw new Error(`Failed to fetch details for meal ID: ${item.meal.idMeal}`);
+                    }
+                return res.json();
+            })
+        );
 
+        const detailResults = await Promise.all(detailFetches);
+
+        //Compare the user's pantry ingredients against the recipe's full ingredient list
+        const pantrySet = new Set(ingredients);
+
+        const scoredMeals = detailResults
+        .map(data => (data.meals && data.meals[0] ? data.meals[0] : null))
+        .filter(Boolean)
+        .map(meal => {
+            const recipeIngredients = extractIngredients(meal);
+            const matchedIngredients = recipeIngredients.filter((ingredient) => pantrySet.has(ingredient));
+            const missingIngredients = recipeIngredients.filter((ingredient) => !pantrySet.has(ingredient));
+
+            return {
+                meal, 
+                matchCount: matchedIngredients.length,
+                missingCount: missingIngredients.length,
+                matchedIngredients,
+                missingIngredients,
+                totalRecipeIngredients: recipeIngredients.length
+            };
+        });
+
+        //Filter out  recipes with no matched ingredients
+        const filteredMeals = scoredMeals.filter(item => item.matchCount > 0);
+        if (filteredMeals.length === 0) {
+            results.innerHTML = "<p class='muted'>No recipes found with your pantry ingredients.</p>";
+            return;
+        }
+        //Sorting by fewest missing ingredients, then by most matched ingredients
+        filteredMeals.sort((a, b) => {
+            if (a.missingCount !== b.missingCount) {
+                return a.missingCount - b.missingCount;
+            }
+            return b.matchCount - a.matchCount;
+        });
+
+        //Display results, showing recipes missing 3 or fewer ingredients
+        const finalMeals = filteredMeals.filter(item => item.missingCount <= 3);
+        if (finalMeals.length === 0) {
+            results.innerHTML = "<p class='muted'>No recipes found with 3 or fewer missing pantry ingredients.</p>";
+            return;
+        }
         results.innerHTML = "";
 
-        let shownCount = 0;
-
-        mealsArray.forEach(item => {
-            const meal = item.meal;
-            const matchCount = item.count;
-            
-            //how many ingrediants from pantry are NOT used by the recipe
-            const missingCount = ingredients.length - matchCount;
-
-            //Show recipes missing 3 or fewer ingredients
-            if(missingCount > 3) return;
+        finalMeals.forEach((item) => {
+            const { meal, matchCount, missingCount, missingIngredients } = item;
 
             const div = document.createElement("div");
             div.classList.add("recipe-card");
             div.innerHTML = `
                 <h3>${escapeHtml(meal.strMeal)}</h3>
                 <img src="${meal.strMealThumb}" alt="${escapeHtml(meal.strMeal)}" loading="lazy">
-                <p class="match-info">Matches ${matchCount} ingredient(s) | Missing ${missingCount} ingredient(s)</p>
+                <p class="match-info"> You have ${matchCount} ingredient(s) | Missing ${missingCount} more</p>
+                <p class="muted"> Missing: ${escapeHtml(missingIngredients.join(", ") || "None")}</p>
             `;
 
             const openRecipe = () => {
@@ -143,12 +201,7 @@ async function fetchRecipes() {
                 }
             });
             results.appendChild(div);
-            shownCount++;
         });
-
-        if (shownCount === 0) {
-            results.innerHTML = "<p class='muted'>No recipes found with 3 or fewer missing pantry ingredients.</p>";
-        }
 
     } catch (error) {
         results.innerHTML = "<p class='muted'>Error fetching recipes.</p>";
