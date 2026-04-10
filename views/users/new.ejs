@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up – PantryPal</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<header>
+    <h1>PantryPal</h1>
+</header>
+
+<main class="page center">
+    <div class="card">
+        <h2>Create an Account</h2>
+
+        <% if (errorFlash && errorFlash.length > 0) { %>
+            <div class="flash flash-error">
+                <% errorFlash.forEach(msg => { %>
+                    <p><%= msg %></p>
+                <% }) %>
+            </div>
+        <% } %>
+
+        <% if (successFlash && successFlash.length > 0) { %>
+            <div class="flash flash-success">
+                <% successFlash.forEach(msg => { %>
+                    <p><%= msg %></p>
+                <% }) %>
+            </div>
+        <% } %>
+
+        <form action="/users" method="POST" id="signup-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+                <ul class="password-rules" id="password-rules" style="display:none">
+                    <li id="rule-length">At least 8 characters</li>
+                    <li id="rule-upper">One uppercase letter</li>
+                    <li id="rule-lower">One lowercase letter</li>
+                    <li id="rule-number">One number</li>
+                    <li id="rule-special">One special character (!@#$%^&*)</li>
+                </ul>
+            </div>
+            <div class="form-group">
+                <label for="confirm-password">Re-enter Password</label>
+                <input type="password" id="confirm-password" required>
+                <p class="confirm-msg" id="confirm-msg"></p>
+            </div>
+            <button type="submit" class="btn" id="submit-btn">Sign Up</button>
+        </form>
+
+        <p class="muted">Already have an account? <a href="/users/login">Log in</a></p>
+    </div>
+</main>
+
+<script>
+    const password = document.getElementById('password');
+    const confirm = document.getElementById('confirm-password');
+    const confirmMsg = document.getElementById('confirm-msg');
+    const submitBtn = document.getElementById('submit-btn');
+
+    const rules = {
+        'rule-length': val => val.length >= 8,
+        'rule-upper':  val => /[A-Z]/.test(val),
+        'rule-lower':  val => /[a-z]/.test(val),
+        'rule-number': val => /[0-9]/.test(val),
+        'rule-special': val => /[!@#$%^&*]/.test(val),
+    };
+
+    function checkRules() {
+        let allPassed = true;
+        for (const [id, test] of Object.entries(rules)) {
+            const el = document.getElementById(id);
+            const passed = test(password.value);
+            el.classList.toggle('rule-pass', passed);
+            el.classList.toggle('rule-fail', !passed);
+            if (!passed) allPassed = false;
+        }
+        return allPassed;
+    }
+
+    function checkMatch() {
+        if (confirm.value === '') {
+            confirmMsg.textContent = '';
+            confirmMsg.className = 'confirm-msg';
+            return false;
+        }
+        const match = password.value === confirm.value;
+        confirmMsg.textContent = match ? 'Passwords match' : 'Passwords do not match';
+        confirmMsg.className = 'confirm-msg ' + (match ? 'confirm-ok' : 'confirm-err');
+        return match;
+    }
+
+    password.addEventListener('focus', () => {
+        document.getElementById('password-rules').style.display = 'flex';
+    });
+
+    password.addEventListener('input', () => { checkRules(); checkMatch(); });
+    confirm.addEventListener('input', checkMatch);
+
+    document.getElementById('signup-form').addEventListener('submit', e => {
+        if (!checkRules() || !checkMatch()) {
+            e.preventDefault();
+        }
+    });
+</script>
+
+</body>
+</html>

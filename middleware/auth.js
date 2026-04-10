@@ -5,7 +5,7 @@ exports.isGuest = (req, res, next) => {
     } else {
         req.flash('error', 'You are logged in');
         req.session.save(() => {
-            return res.redirect('/users/profile');
+            return res.redirect('/');
         });
     }
 };

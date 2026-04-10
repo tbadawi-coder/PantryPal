@@ -47,13 +47,17 @@ app.use(methodOverride('_method'));
 
 //  This is for routing
 app.get('/' , (req, res) => {
-    // res.render('index', {cssFile: '/css/styles.css'})
-    res.json({msg: 'working'})
-    // implement ejs files - convert html to individual ejs files for each view
-    //  make seperate headers and footers that will be on each page for easy navigation
-    //  then we ca link everything
+    res.sendFile(__dirname + '/views/index.html')
 })
 //  I only did users for now - we can implement the others if we want to use the mvc style 
+app.get('/api/me', async (req, res) => {
+    if (!req.session.user) return res.json({ loggedIn: false });
+    const db = require('./config/db');
+    const [rows] = await db.execute('SELECT username FROM users WHERE id = ?', [req.session.user]);
+    const username = rows[0] ? rows[0].username : '';
+    res.json({ loggedIn: true, username });
+});
+
 app.use('/users', userRoutes);
 
 //  Express error handelers

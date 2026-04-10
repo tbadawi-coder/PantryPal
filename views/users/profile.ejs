@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile – PantryPal</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<header>
+    <nav class="nav">
+        <a href="/" class="nav-logo">🍳 PantryPal</a>
+        <div class="nav-actions">
+            <a href="/users/logout" class="btn auth-btn auth-btn-secondary">Log Out</a>
+        </div>
+    </nav>
+</header>
+
+<main class="page">
+    <div class="card" style="max-width: 560px; margin: 0 auto;">
+
+        <% if (errorFlash && errorFlash.length > 0) { %>
+            <div class="flash flash-error">
+                <% errorFlash.forEach(msg => { %>
+                    <p><%= msg %></p>
+                <% }) %>
+            </div>
+        <% } %>
+        <% if (successFlash && successFlash.length > 0) { %>
+            <div class="flash flash-success">
+                <% successFlash.forEach(msg => { %>
+                    <p><%= msg %></p>
+                <% }) %>
+            </div>
+        <% } %>
+
+        <!-- Avatar -->
+        <div style="text-align:center; margin-bottom: 24px;">
+            <div class="avatar avatar-large"><%= user.username[0].toUpperCase() %></div>
+            <h2 style="margin: 12px 0 4px;"><%= user.username %></h2>
+            <p class="muted"><%= user.email %></p>
+        </div>
+
+        <!-- Edit Profile -->
+        <h3 class="section-title">Edit Profile</h3>
+        <form action="/users/profile/edit" method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" value="<%= user.username %>" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="<%= user.email %>" required>
+            </div>
+            <button type="submit" class="btn">Save Changes</button>
+        </form>
+
+        <hr class="divider">
+
+        <!-- Change Password -->
+        <h3 class="section-title">Change Password</h3>
+        <form action="/users/profile/password" method="POST" id="password-form">
+            <div class="form-group">
+                <label for="currentPassword">Current Password</label>
+                <input type="password" id="currentPassword" name="currentPassword" required>
+            </div>
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPassword" name="newPassword" required>
+                <ul class="password-rules" id="password-rules" style="display:none">
+                    <li id="rule-length">At least 8 characters</li>
+                    <li id="rule-upper">One uppercase letter</li>
+                    <li id="rule-lower">One lowercase letter</li>
+                    <li id="rule-number">One number</li>
+                    <li id="rule-special">One special character (!@#$%^&*)</li>
+                </ul>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm New Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                <p class="confirm-msg" id="confirm-msg"></p>
+            </div>
+            <button type="submit" class="btn">Change Password</button>
+        </form>
+
+        <hr class="divider">
+
+        <!-- Delete Account -->
+        <h3 class="section-title" style="color: #b91c1c;">Danger Zone</h3>
+        <p class="muted">Deleting your account is permanent and cannot be undone.</p>
+        <form action="/users/profile/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.')">
+            <button type="submit" class="btn btn-danger">Delete Account</button>
+        </form>
+
+    </div>
+</main>
+
+<script>
+    const newPassword = document.getElementById('newPassword');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const confirmMsg = document.getElementById('confirm-msg');
+
+    const rules = {
+        'rule-length':  val => val.length >= 8,
+        'rule-upper':   val => /[A-Z]/.test(val),
+        'rule-lower':   val => /[a-z]/.test(val),
+        'rule-number':  val => /[0-9]/.test(val),
+        'rule-special': val => /[!@#$%^&*]/.test(val),
+    };
+
+    function checkRules() {
+        let allPassed = true;
+        for (const [id, test] of Object.entries(rules)) {
+            const el = document.getElementById(id);
+            const passed = test(newPassword.value);
+            el.classList.toggle('rule-pass', passed);
+            el.classList.toggle('rule-fail', !passed);
+            if (!passed) allPassed = false;
+        }
+        return allPassed;
+    }
+
+    function checkMatch() {
+        if (confirmPassword.value === '') {
+            confirmMsg.textContent = '';
+            confirmMsg.className = 'confirm-msg';
+            return false;
+        }
+        const match = newPassword.value === confirmPassword.value;
+        confirmMsg.textContent = match ? 'Passwords match' : 'Passwords do not match';
+        confirmMsg.className = 'confirm-msg ' + (match ? 'confirm-ok' : 'confirm-err');
+        return match;
+    }
+
+    newPassword.addEventListener('focus', () => {
+        document.getElementById('password-rules').style.display = 'flex';
+    });
+    newPassword.addEventListener('input', () => { checkRules(); checkMatch(); });
+    confirmPassword.addEventListener('input', checkMatch);
+
+    document.getElementById('password-form').addEventListener('submit', e => {
+        if (!checkRules() || !checkMatch()) e.preventDefault();
+    });
+</script>
+
+</body>
+</html>

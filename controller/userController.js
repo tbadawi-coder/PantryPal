@@ -1,12 +1,9 @@
-const userModel = require('../config/db')
+const db = require('../config/db')
 const bcrypt = require('bcryptjs');
 
 
 exports.newUser = (req, res) => {
-    res.send('GET Profile Placeholder');
-    // return res.render('./users/new', { cssFile: '/css/user/new.css' });
-    //  create the ejs file with the new user form.
-    //  will create the middleware later
+    return res.render('./users/new');
 };
 
 exports.createUser = async (req, res, next) => {
@@ -50,18 +47,16 @@ exports.createUser = async (req, res, next) => {
 }
 
 exports.loginForm  = (req, res) => {
-    res.send('GET Login Placeholder');
-    // if we do ejs uncomment the below 
-    // return res.render('./users/login', { cssFile: './styles.css' })
+    return res.render('./users/login');
 }
 
 
-exports.login  = async (req, res) => {
+exports.login  = async (req, res, next) => {
     // res.send('Post Profile Placeholder');
     try{
     // let email = req.body.email
     // let password = req.body.password;
-    const {email , password} = req.body;
+    let {email , password} = req.body;
 
     if (email){
         email = email.toLowerCase();
@@ -73,7 +68,7 @@ exports.login  = async (req, res) => {
 
     if(!user){
         console.log('Wrong email address');
-        req.flash('error', 'wrong email address');
+        req.flash('error', 'Account does not exist');
         return req.session.save(() => {
             res.redirect('/users/login');
         });
@@ -91,7 +86,7 @@ exports.login  = async (req, res) => {
             req.flash('error', 'Incorrect Password');
             return req.session.save(()=>{
                 // user will be asked to login again, form will reload 
-                res.redirect('users/login');
+                res.redirect('/users/login');
             })
         }
 
@@ -102,10 +97,65 @@ exports.login  = async (req, res) => {
     }
 
 }
-//  can also implement profile so users can see all their ingreidents, saved recipe and possibly any recipes they create/upload
-//  gets rid of the user attached to the session so views will not contain any user information.
-exports.logout  = (req, res) => {
-    res.send('GET Profile Placeholder');
+exports.profile = async (req, res, next) => {
+    try {
+        const [rows] = await db.execute('SELECT id, username, email FROM users WHERE id = ?', [req.session.user]);
+        const user = rows[0];
+        if (!user) return res.redirect('/users/login');
+        return res.render('./users/profile', { user });
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.editProfile = async (req, res, next) => {
+    try {
+        const { username } = req.body;
+        const email = req.body.email ? req.body.email.toLowerCase() : '';
+        await db.execute('UPDATE users SET username = ?, email = ? WHERE id = ?', [username, email, req.session.user]);
+        req.flash('success', 'Profile updated successfully');
+        return req.session.save(() => res.redirect('/users/profile'));
+    } catch (err) {
+        if (err.errno == 1062) {
+            req.flash('error', 'Email is already in use');
+            return req.session.save(() => res.redirect('/users/profile'));
+        }
+        next(err);
+    }
+};
+
+exports.changePassword = async (req, res, next) => {
+    try {
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+        if (newPassword !== confirmPassword) {
+            req.flash('error', 'New passwords do not match');
+            return req.session.save(() => res.redirect('/users/profile'));
+        }
+        const [rows] = await db.execute('SELECT password FROM users WHERE id = ?', [req.session.user]);
+        const correct = await bcrypt.compare(currentPassword, rows[0].password);
+        if (!correct) {
+            req.flash('error', 'Current password is incorrect');
+            return req.session.save(() => res.redirect('/users/profile'));
+        }
+        const hashed = await bcrypt.hash(newPassword, 10);
+        await db.execute('UPDATE users SET password = ? WHERE id = ?', [hashed, req.session.user]);
+        req.flash('success', 'Password changed successfully');
+        return req.session.save(() => res.redirect('/users/profile'));
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.deleteAccount = async (req, res, next) => {
+    try {
+        await db.execute('DELETE FROM users WHERE id = ?', [req.session.user]);
+        req.session.destroy(() => res.redirect('/'));
+    } catch (err) {
+        next(err);
+    }
+};
+
+exports.logout  = (req, res, next) => {
     req.session.destroy(err=>{
         if(err){
             return next(err);
@@ -113,5 +163,4 @@ exports.logout  = (req, res) => {
             res.redirect('/')
         }
     });
-
 }

@@ -2,15 +2,19 @@ const {body, param} = require('express-validator');
 const {validationResult} = require('express-validator');
 
 exports.validateSignUp = [
-    body('firstName', 'First name cannot be empty').notEmpty().trim().escape(),
-    body('lastName', 'Last name cannot be empty').notEmpty().trim().escape(),
-    body('email', 'Email must be a valid email address').isEmail().trim().escape().normalizeEmail(),
-    body('password', 'Password must be between 8 and 64 characters').isLength({ min: 8, max: 64 })
+    body('username', 'Username cannot be empty').notEmpty().trim().escape(),
+    body('email', 'Email must be a valid email address').isEmail().trim().escape(),
+    body('password', 'Password must be at least 8 characters and include an uppercase letter, lowercase letter, number, and special character (!@#$%^&*)')
+        .isLength({ min: 8, max: 64 })
+        .matches(/[A-Z]/)
+        .matches(/[a-z]/)
+        .matches(/[0-9]/)
+        .matches(/[!@#$%^&*]/)
 ];
 
 exports.validateLogIn = [
-    body('email', 'Email must be a valid email address').isEmail().trim().escape().normalizeEmail(),
-    body('password', 'Password must be between 8 and 64 characters').isLength({ min: 8, max: 64 })
+    body('email', 'Email must be a valid email address').isEmail().trim().escape(),
+    body('password', 'Password cannot be empty').notEmpty()
 ];
 
 exports.validateId = [
@@ -29,7 +33,7 @@ exports.validateResult = (req, res, next) =>{
             req.flash('error', error.msg);
         });
         return req.session.save(() => {
-            res.redirect('back');
+            res.redirect(req.headers.referer || '/');
         });
     }else{
         return next();

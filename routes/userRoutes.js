@@ -16,5 +16,10 @@ router.post('/login', isGuest, validateLogIn, validateResult, controller.login)
 
 router.get('/logout', isLoggedIn, controller.logout)
 
+router.get('/profile', isLoggedIn, controller.profile)
+router.post('/profile/edit', isLoggedIn, controller.editProfile)
+router.post('/profile/password', isLoggedIn, controller.changePassword)
+router.post('/profile/delete', isLoggedIn, controller.deleteAccount)
+
 
 module.exports = router;
