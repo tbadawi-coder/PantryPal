@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe AI Chat - PantryPal</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/chat.css">
+</head>
+<body>
+
+<header>
+    <h1>🤖 Recipe AI Chat</h1>
+    <p>Ask for recipe ideas based on your ingredients</p>
+</header>
+
+<main class="page">
+    <div class="chat-container">
+        <div class="chat-box">
+            <div id="messages" class="messages">
+                <div class="message assistant-message">
+                    <div class="message-content">
+                        👋 Hi! I'm your Recipe AI Assistant. Tell me what ingredients you have, and I'll suggest delicious recipes you can make. What do you have on hand today?
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <form id="chatForm" class="chat-input-form">
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        placeholder="E.g., I have chicken, rice, and tomatoes..." 
+                        autocomplete="off"
+                    >
+                    <button type="submit" id="sendBtn" class="send-btn">
+                        <span>Send</span>
+                        <span class="spinner" id="spinner"></span>
+                    </button>
+                </form>
+                <p class="input-hint">💡 Tip: List your available ingredients or ask for specific recipe ideas</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="/js/chat.js"></script>
+
+</body>
+</html>
