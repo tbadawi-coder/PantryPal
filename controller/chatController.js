@@ -59,7 +59,9 @@ exports.handleMessage = async (req, res) => {
         console.error('Error calling OpenAI:', debugMessage);
 
         let userMessage = 'Failed to generate response. Please try again later.';
-        if (debugMessage.includes('API key') || debugMessage.includes('Invalid API key')) {
+        if (debugMessage.includes('Missing scopes') || debugMessage.includes('insufficient permissions') || debugMessage.includes('model.request')) {
+            userMessage = 'OpenAI API key does not have the required model access. Create a new key with model.request access in your OpenAI dashboard.';
+        } else if (debugMessage.includes('API key') || debugMessage.includes('Invalid API key')) {
             userMessage = 'OpenAI API key invalid or missing. Please check your OPENAI_API_KEY in .env.';
         } else if (debugMessage.includes('quota') || debugMessage.includes('429')) {
             userMessage = 'OpenAI quota exceeded. Please check your OpenAI plan and billing details.';
