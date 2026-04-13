@@ -8,6 +8,8 @@ const MySQLStore = require('express-mysql-session')(session);
 const cors = require("cors");
 const flash = require('connect-flash');
 const userRoutes = require('./routes/userRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const plannerRoutes = require('./routes/plannerRoutes');
 const db = require('./config/db.js')
 
 const app = express();
@@ -18,7 +20,16 @@ let port = 3000;
 let host = 'localhost';
 
 app.set('view engine', 'ejs');
-const sessionStore = new MySQLStore({}, db);
+
+const hasDbConfig = process.env.DB_HOST && process.env.DB_USER && process.env.DB_PASSWORD && process.env.DB_NAME;
+let sessionStore;
+
+if (hasDbConfig) {
+    sessionStore = new MySQLStore({}, db);
+} else {
+    sessionStore = new session.MemoryStore();
+    console.warn('DB session store disabled: using in-memory session storage because DB environment variables are missing.');
+}
 
 app.use(
     session({
@@ -65,7 +76,10 @@ app.get('/recipe.html', (req, res) => {
 app.get('/about.html', (req, res) => {
     res.sendFile(__dirname + '/views/about.html')
 })
-//  I only did users for now - we can implement the others if we want to use the mvc style 
+
+app.get('/planner.html', (req, res) => {
+    res.sendFile(__dirname + '/views/planner.html')
+})
 app.get('/api/me', async (req, res) => {
     if (!req.session.user) return res.json({ loggedIn: false });
     const db = require('./config/db');
@@ -75,6 +89,8 @@ app.get('/api/me', async (req, res) => {
 });
 
 app.use('/users', userRoutes);
+app.use('/chat', chatRoutes);
+app.use('/api/planner', plannerRoutes);
 
 //  Express error handelers
 app.use((req, res, next) => {

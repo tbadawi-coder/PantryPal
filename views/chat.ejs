@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipe Detail</title>
+    <title>Recipe AI Chat - PantryPal</title>
     <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="/css/planner.css">
+    <link rel="stylesheet" href="/css/chat.css">
 </head>
 <body>
+
 <header>
     <nav class="nav">
         <a href="/" class="nav-logo">🍳 PantryPal</a>
@@ -25,26 +26,50 @@
         </div>
     </nav>
     <div class="hero-header">
-        <h1 id="recipeTitle">Loading...</h1>
-        <a class="btn btn-secondary" href="/results.html">← Back to Results</a>
+        <h1>🤖 Recipe AI Chat</h1>
+        <p>Ask for recipe ideas based on your ingredients</p>
     </div>
 </header>
-<main id="recipeDetail" class="page">
-    <p class="muted">Loading recipe...</p>
+
+<main class="page">
+    <div class="chat-container">
+        <div class="chat-box">
+            <div id="messages" class="messages">
+                <div class="message assistant-message">
+                    <div class="message-content">
+                        👋 Hi! I'm your Recipe AI Assistant. Tell me what ingredients you have, and I'll suggest delicious recipes you can make. What do you have on hand today?
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <form id="chatForm" class="chat-input-form">
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        placeholder="E.g., I have chicken, rice, and tomatoes..." 
+                        autocomplete="off"
+                    >
+                    <button type="submit" id="sendBtn" class="send-btn">
+                        <span>Send</span>
+                        <span class="spinner" id="spinner"></span>
+                    </button>
+                </form>
+                <p class="input-hint">💡 Tip: List your available ingredients or ask for specific recipe ideas</p>
+            </div>
+        </div>
+    </div>
 </main>
-<div class="page-back page">
-    <button type="button" class="bottom-back-btn" onclick="window.history.back()">← Back</button>
-</div>
+
 <script>
     (function () {
-        const current = "results";
+        const current = "chat";
         document.querySelectorAll('.nav-links a[data-page="' + current + '"]')
             .forEach(function (link) {
                 link.classList.add('active');
             });
     })();
 </script>
-<script src="/recipe.js"></script>
 <script>
     fetch('http://localhost:3000/api/me')
         .then(res => res.json())
@@ -58,12 +83,14 @@
                         <div class="avatar-dropdown">
                             <span class="avatar-dropdown-name">${data.username}</span>
                             <a href="http://localhost:3000/users/profile">Profile</a>
-                            <a href="http://localhost:3000/users/logout" onclick="return confirm('Are you sure you want to log out?')">Log Out</a>
+                            <a href="http://localhost:3000/users/logout">Log Out</a>
                         </div>
                     </div>`;
             }
         })
         .catch(() => {});
 </script>
+<script src="/js/chat.js"></script>
+
 </body>
 </html>

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meal Planner – PantryPal</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/planner.css">
+</head>
+<body>
+
+<header>
+    <nav class="nav">
+        <a href="/" class="nav-logo">🍳 PantryPal</a>
+        <ul class="nav-links">
+            <li><a href="/" data-page="home">Home</a></li>
+            <li><a href="/pantry.html" data-page="pantry">Pantry</a></li>
+            <li><a href="/results.html" data-page="results">Results</a></li>
+            <li><a href="/planner.html" data-page="planner">Planner</a></li>
+            <li><a href="/chat" data-page="chat">AI Chat</a></li>
+            <li><a href="/about.html" data-page="about">About</a></li>
+        </ul>
+        <div class="nav-actions" id="nav-auth">
+            <a href="http://localhost:3000/users/login" class="btn auth-btn auth-btn-secondary">Sign In</a>
+            <a href="http://localhost:3000/users/new" class="btn auth-btn">Sign Up</a>
+        </div>
+    </nav>
+    <div class="hero-header">
+        <h1>Meal Planner</h1>
+        <p class="muted">Plan your meals for the week.</p>
+    </div>
+</header>
+
+<main class="page">
+
+    <!-- Not logged in banner (hidden by default, shown via JS) -->
+    <div id="guest-banner" class="guest-banner" style="display:none">
+        <p>Want to save your meal plan? <a href="http://localhost:3000/users/new">Create a free account</a> or <a href="http://localhost:3000/users/login">Sign in</a>.</p>
+    </div>
+
+    <!-- Week navigation -->
+    <div class="week-nav">
+        <h2 class="week-label" id="week-label"></h2>
+        <div class="week-menu-wrap">
+            <button type="button" class="btn-week-menu" id="week-menu-btn">&#8942;</button>
+            <div class="week-menu-dropdown" id="week-menu-dropdown">
+                <button type="button" id="clear-week">Clear Week</button>
+                <button type="button" id="copy-week">Copy Week</button>
+                <button type="button" id="paste-week" style="display:none">Paste Week</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar grid with flanking arrows -->
+    <div class="planner-grid-wrap">
+        <button type="button" class="btn-week-arrow" id="prev-week">&#8592;</button>
+        <div class="planner-grid" id="planner-grid"></div>
+        <button type="button" class="btn-week-arrow" id="next-week">&#8594;</button>
+    </div>
+
+    <!-- Add to planner modal -->
+    <div class="modal-overlay" id="modal-overlay" style="display:none">
+        <div class="modal">
+            <h3 id="modal-title">Add to Planner</h3>
+            <p class="muted" id="modal-day-label"></p>
+            <div class="form-group">
+                <label for="meal-type">Meal</label>
+                <select id="meal-type">
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner">Dinner</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn" id="modal-confirm">Add</button>
+                <button type="button" class="btn btn-outline" id="modal-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guest prompt modal -->
+    <div class="modal-overlay" id="guest-modal" style="display:none">
+        <div class="modal">
+            <h3>Create an Account to Use the Planner</h3>
+            <p class="muted">Save and manage your weekly meal plan by creating a free account.</p>
+            <div class="modal-actions">
+                <a href="http://localhost:3000/users/new" class="btn">Create Account</a>
+                <a href="http://localhost:3000/users/login" class="btn btn-outline">Sign In</a>
+            </div>
+            <button type="button" class="modal-close" id="guest-modal-close">✕</button>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const MEALS = ['Breakfast', 'Lunch', 'Dinner'];
+
+    let currentMonday = getMonday(new Date());
+    let isLoggedIn = false;
+
+    // Check auth state
+    fetch('http://localhost:3000/api/me')
+        .then(r => r.json())
+        .then(data => {
+            isLoggedIn = data.loggedIn;
+            const navAuth = document.getElementById('nav-auth');
+            if (data.loggedIn) {
+                const initial = data.username[0].toUpperCase();
+                navAuth.innerHTML = `
+                    <div class="avatar-wrap">
+                        <div class="avatar">${initial}</div>
+                        <div class="avatar-dropdown">
+                            <span class="avatar-dropdown-name">${data.username}</span>
+                            <a href="http://localhost:3000/users/profile">Profile</a>
+                            <a href="http://localhost:3000/users/logout" onclick="return confirm('Are you sure you want to log out?')">Log Out</a>
+                        </div>
+                    </div>`;
+            } else {
+                document.getElementById('guest-banner').style.display = 'block';
+            }
+            renderWeek();
+        })
+        .catch(() => { renderWeek(); });
+
+    function getMonday(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        d.setDate(diff);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    function formatDate(date) {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function formatDateKey(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function renderWeek() {
+        const grid = document.getElementById('planner-grid');
+        const sunday = new Date(currentMonday);
+        sunday.setDate(sunday.getDate() + 6);
+        document.getElementById('week-label').textContent =
+            `${formatDate(currentMonday)} – ${formatDate(sunday)}`;
+
+        grid.innerHTML = '';
+
+        savedMeals = {};
+        DAYS.forEach((dayName, i) => {
+            const date = new Date(currentMonday);
+            date.setDate(date.getDate() + i);
+            const dateKey = formatDateKey(date);
+            const isToday = formatDateKey(new Date()) === dateKey;
+
+            const dayCol = document.createElement('div');
+            dayCol.className = 'planner-day' + (isToday ? ' planner-day-today' : '');
+            dayCol.innerHTML = `
+                <div class="planner-day-header">
+                    <span class="planner-day-name">${dayName}</span>
+                    <span class="planner-day-date">${formatDate(date)}</span>
+                </div>
+                <div class="planner-meals">
+                    ${MEALS.map(meal => `
+                        <div class="meal-slot" data-date="${dateKey}" data-meal="${meal.toLowerCase()}">
+                            <span class="meal-label">${meal}</span>
+                            <div class="meal-content" id="meal-${dateKey}-${meal.toLowerCase()}">
+                                <button type="button" class="add-meal-btn" onclick="handleAddMeal('${dateKey}', '${meal}', '${dayName}')">+ Add</button>
+                                <button type="button" class="note-btn-empty" id="note-btn-${dateKey}-${meal.toLowerCase()}" onclick="openNoteModal('${dateKey}', '${meal.toLowerCase()}', '')">✏️</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`;
+            grid.appendChild(dayCol);
+        });
+        loadMeals();
+    }
+
+    let savedMeals = {};
+    let savedNotes = {};
+
+    async function loadMeals() {
+        if (!isLoggedIn) return;
+        const sunday = new Date(currentMonday);
+        sunday.setDate(sunday.getDate() + 6);
+        const startDate = formatDateKey(currentMonday);
+        const endDate = formatDateKey(sunday);
+
+        try {
+            const [mealsRes, notesRes] = await Promise.all([
+                fetch(`http://localhost:3000/api/planner?startDate=${startDate}&endDate=${endDate}`),
+                fetch(`http://localhost:3000/api/planner/notes?startDate=${startDate}&endDate=${endDate}`)
+            ]);
+            const mealsData = await mealsRes.json();
+            const notesData = await notesRes.json();
+
+            savedMeals = {};
+            mealsData.meals.forEach(m => {
+                savedMeals[`${m.date.split('T')[0]}-${m.meal_type}`] = m;
+            });
+
+            savedNotes = {};
+            notesData.notes.forEach(n => {
+                savedNotes[`${n.date.split('T')[0]}-${n.meal_type}`] = n;
+            });
+
+            populateMeals();
+        } catch (e) {}
+    }
+
+    function populateMeals() {
+        // Populate meals
+        Object.entries(savedMeals).forEach(([key, meal]) => {
+            const el = document.getElementById(`meal-${meal.date.split('T')[0]}-${meal.meal_type}`);
+            const note = savedNotes[key];
+            if (el) {
+                const noteText = note ? `<span class="meal-note-text">${note.notes}</span>` : '';
+                const escapedNote = note ? note.notes.replace(/'/g, "\\'") : '';
+                el.innerHTML = `
+                    <div class="meal-card" onclick="openRecipe('${meal.recipe_id}')" style="cursor:pointer">
+                        ${meal.recipe_image ? `<img src="${meal.recipe_image}" alt="${meal.recipe_name}">` : ''}
+                        <span class="meal-recipe-name">${meal.recipe_name}</span>
+                        ${noteText}
+                        <div class="meal-card-actions">
+                            <button type="button" class="note-btn" onclick="event.stopPropagation(); openNoteModal('${meal.date.split('T')[0]}', '${meal.meal_type}', '${escapedNote}')">✏️</button>
+                            <button type="button" class="remove-meal-btn" onclick="event.stopPropagation(); deleteMeal(${meal.id}, '${meal.date.split('T')[0]}', '${meal.meal_type}')">✕</button>
+                        </div>
+                    </div>`;
+            }
+        });
+
+        // Update note buttons on all slots
+        document.querySelectorAll('.meal-slot').forEach(slot => {
+            const date = slot.dataset.date;
+            const mealType = slot.dataset.meal;
+            const key = `${date}-${mealType}`;
+            const note = savedNotes[key];
+            const noteBtn = document.getElementById(`note-btn-${date}-${mealType}`);
+            if (noteBtn) {
+                noteBtn.textContent = '✏️';
+                noteBtn.onclick = () => openNoteModal(date, mealType, note ? note.notes : '');
+            }
+            if (!savedMeals[key]) {
+                // Update note text on empty slots
+                let span = slot.querySelector('.meal-note-text');
+                if (note) {
+                    if (!span) {
+                        span = document.createElement('span');
+                        span.className = 'meal-note-text';
+                        noteBtn.parentNode.insertBefore(span, noteBtn);
+                    }
+                    span.textContent = note.notes;
+                } else if (span) {
+                    span.remove();
+                }
+            }
+        });
+    }
+
+    async function deleteMeal(id, date, mealType) {
+        try {
+            await fetch(`http://localhost:3000/api/planner/${id}`, { method: 'DELETE' });
+            const el = document.getElementById(`meal-${date}-${mealType}`);
+            if (el) {
+                const key = `${date}-${mealType}`;
+                const note = savedNotes[key];
+                const noteText = note ? `<span class="meal-note-text">${note.notes}</span>` : '';
+                el.innerHTML = `
+                    <button type="button" class="add-meal-btn" onclick="handleAddMeal('${date}', '${mealType}', '')">+ Add</button>
+                    ${noteText}
+                    <button type="button" class="note-btn-empty" id="note-btn-${date}-${mealType}" onclick="openNoteModal('${date}', '${mealType}', '${note ? note.notes.replace(/'/g, "\\'") : ''}')">✏️</button>`;
+            }
+            delete savedMeals[`${date}-${mealType}`];
+        } catch (e) {}
+    }
+
+    function openNoteModal(date, mealType, existingNote) {
+        const existing = document.getElementById('note-modal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'note-modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal">
+                <h3>Note</h3>
+                <div class="form-group">
+                    <textarea id="note-input" placeholder="e.g. Make extra for lunch tomorrow..." rows="3" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--border); font-family:inherit; font-size:0.95rem; resize:vertical;">${existingNote || ''}</textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="note-save">Save</button>
+                    <button type="button" class="btn btn-outline" id="note-cancel">Cancel</button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+
+        document.getElementById('note-cancel').addEventListener('click', () => modal.remove());
+        document.getElementById('note-save').addEventListener('click', async () => {
+            const notes = document.getElementById('note-input').value.trim();
+            try {
+                const res = await fetch('http://localhost:3000/api/planner/notes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date, meal_type: mealType, notes })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error('Save failed');
+            } catch (e) {
+                alert('Could not save note. Please try again.');
+                return;
+            }
+            modal.remove();
+
+            // Update savedNotes in memory
+            const key = `${date}-${mealType}`;
+            if (notes) {
+                savedNotes[key] = { date, meal_type: mealType, notes };
+            } else {
+                delete savedNotes[key];
+            }
+
+            // Directly update the DOM for this slot
+            const slot = document.querySelector(`.meal-slot[data-date="${date}"][data-meal="${mealType}"]`);
+            if (!slot) return;
+
+            let span = slot.querySelector('.meal-note-text');
+            if (notes) {
+                if (!span) {
+                    span = document.createElement('span');
+                    span.className = 'meal-note-text';
+                    // For meal slots insert inside card, for empty slots insert before note button
+                    const card = slot.querySelector('.meal-card');
+                    if (card) {
+                        const actions = card.querySelector('.meal-card-actions');
+                        card.insertBefore(span, actions);
+                    } else {
+                        const noteBtn = slot.querySelector('.note-btn-empty');
+                        const mealContent = slot.querySelector('.meal-content');
+                        if (noteBtn) mealContent.insertBefore(span, noteBtn);
+                        else mealContent.appendChild(span);
+                    }
+                }
+                span.textContent = notes;
+            } else if (span) {
+                span.remove();
+            }
+
+            // Update the pencil button's onclick to carry the new note for next edit
+            const noteBtn = slot.querySelector('.note-btn, .note-btn-empty');
+            if (noteBtn) noteBtn.onclick = (e) => { e.stopPropagation(); openNoteModal(date, mealType, notes); };
+        });
+    }
+
+    function openRecipe(recipeId) {
+        localStorage.setItem('selectedMealId', recipeId);
+        window.location.href = '/recipe.html';
+    }
+
+    function handleAddMeal(dateKey, meal, dayName) {
+        if (!isLoggedIn) {
+            document.getElementById('guest-modal').style.display = 'flex';
+            return;
+        }
+        // Store slot in sessionStorage and go to pantry to pick a recipe
+        sessionStorage.setItem('plannerSlot', JSON.stringify({ date: dateKey, meal_type: meal.toLowerCase() }));
+        window.location.href = '/pantry.html';
+    }
+
+    document.getElementById('prev-week').addEventListener('click', () => {
+        currentMonday.setDate(currentMonday.getDate() - 7);
+        renderWeek();
+    });
+
+    document.getElementById('next-week').addEventListener('click', () => {
+        currentMonday.setDate(currentMonday.getDate() + 7);
+        renderWeek();
+    });
+
+    document.getElementById('week-menu-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const dropdown = document.getElementById('week-menu-dropdown');
+        dropdown.classList.toggle('open');
+    });
+
+    document.addEventListener('click', () => {
+        document.getElementById('week-menu-dropdown').classList.remove('open');
+    });
+
+    document.getElementById('clear-week').addEventListener('click', async () => {
+        if (!isLoggedIn) {
+            document.getElementById('guest-modal').style.display = 'flex';
+            return;
+        }
+        const confirmed = confirm('Clear all meals for this week?');
+        if (!confirmed) return;
+        const sunday = new Date(currentMonday);
+        sunday.setDate(sunday.getDate() + 6);
+        await fetch('http://localhost:3000/api/planner/clear-week', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                startDate: formatDateKey(currentMonday),
+                endDate: formatDateKey(sunday)
+            })
+        });
+        renderWeek();
+    });
+
+    // Show paste button if something is copied
+    function updatePasteBtn() {
+        const copied = localStorage.getItem('copiedWeek');
+        document.getElementById('paste-week').style.display = copied ? 'block' : 'none';
+    }
+    updatePasteBtn();
+
+    document.getElementById('copy-week').addEventListener('click', async () => {
+        if (!isLoggedIn) {
+            document.getElementById('guest-modal').style.display = 'flex';
+            return;
+        }
+        const sunday = new Date(currentMonday);
+        sunday.setDate(sunday.getDate() + 6);
+        const res = await fetch(`http://localhost:3000/api/planner?startDate=${formatDateKey(currentMonday)}&endDate=${formatDateKey(sunday)}`);
+        const data = await res.json();
+        if (!data.meals || data.meals.length === 0) {
+            alert('No meals in this week to copy.');
+            return;
+        }
+        // Store meals with relative day offsets (0=Mon, 6=Sun)
+        const mondayStr = formatDateKey(currentMonday);
+        const copied = data.meals.map(m => {
+            const mealDateStr = m.date.split('T')[0];
+            const [my, mm, md] = mealDateStr.split('-').map(Number);
+            const [wy, wm, wd] = mondayStr.split('-').map(Number);
+            const mealLocal = new Date(my, mm - 1, md);
+            const weekLocal = new Date(wy, wm - 1, wd);
+            return {
+                recipe_id: m.recipe_id,
+                recipe_name: m.recipe_name,
+                recipe_image: m.recipe_image,
+                meal_type: m.meal_type,
+                dayOffset: Math.round((mealLocal - weekLocal) / 86400000)
+            };
+        });
+        localStorage.setItem('copiedWeek', JSON.stringify(copied));
+        updatePasteBtn();
+        alert(`${copied.length} meal(s) copied! Navigate to any week and paste.`);
+    });
+
+    document.getElementById('paste-week').addEventListener('click', async () => {
+        if (!isLoggedIn) {
+            document.getElementById('guest-modal').style.display = 'flex';
+            return;
+        }
+        const copied = JSON.parse(localStorage.getItem('copiedWeek'));
+        if (!copied) return;
+        const confirmed = confirm(`Paste ${copied.length} meal(s) into this week? Existing meals won't be overwritten.`);
+        if (!confirmed) return;
+
+        const res = await fetch('http://localhost:3000/api/planner/paste-week', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                weekStart: formatDateKey(currentMonday),
+                meals: copied
+            })
+        });
+        const data = await res.json();
+        if (data.success) renderWeek();
+    });
+
+    document.getElementById('guest-modal-close').addEventListener('click', () => {
+        document.getElementById('guest-modal').style.display = 'none';
+    });
+
+    // Active nav
+    (function () {
+        document.querySelectorAll('.nav-links a[data-page="planner"]')
+            .forEach(link => link.classList.add('active'));
+    })();
+</script>
+
+</body>
+</html>

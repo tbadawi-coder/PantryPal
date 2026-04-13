@@ -93,7 +93,7 @@ async function fetchRecipes() {
             fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(ingredient)}`)
                 .then((res) => {
                     if (!res.ok) {
-                        throw new Error('Failed to fetch recipes for ingredient: ${ingredient}');
+                        throw new Error(`Failed to fetch recipes for ingredient: ${ingredient}`);
                     }
                     return res.json();
                 })
