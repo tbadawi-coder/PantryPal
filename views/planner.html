@@ -225,16 +225,18 @@
             if (el) {
                 const noteText = note ? `<span class="meal-note-text">${note.notes}</span>` : '';
                 const escapedNote = note ? note.notes.replace(/'/g, "\\'") : '';
-                el.innerHTML = `
-                    <div class="meal-card" onclick="openRecipe('${meal.recipe_id}')" style="cursor:pointer">
+                const hasRecipe = meal.recipe_id && meal.recipe_id !== 'null' && meal.recipe_id != 0;
+                const cardInner = `
                         ${meal.recipe_image ? `<img src="${meal.recipe_image}" alt="${meal.recipe_name}">` : ''}
                         <span class="meal-recipe-name">${meal.recipe_name}</span>
                         ${noteText}
                         <div class="meal-card-actions">
                             <button type="button" class="note-btn" onclick="event.stopPropagation(); openNoteModal('${meal.date.split('T')[0]}', '${meal.meal_type}', '${escapedNote}')">✏️</button>
                             <button type="button" class="remove-meal-btn" onclick="event.stopPropagation(); deleteMeal(${meal.id}, '${meal.date.split('T')[0]}', '${meal.meal_type}')">✕</button>
-                        </div>
-                    </div>`;
+                        </div>`;
+                el.innerHTML = hasRecipe
+                    ? `<div class="meal-card" onclick="openRecipe('${meal.recipe_id}')" style="cursor:pointer">${cardInner}</div>`
+                    : `<div class="meal-card">${cardInner}</div>`;
             }
         });
 
