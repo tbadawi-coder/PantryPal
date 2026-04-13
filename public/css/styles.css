@@ -44,11 +44,15 @@ header {
 }
 
 .nav-logo {
-    font-weight: 800;
-    font-size: 1.1rem;
-    letter-spacing: -0.02em;
-    color: white;
+    display: inline-flex;
+    align-items: center;
     text-decoration: none;
+}
+
+.nav-logo-image {
+    height: 48px;
+    width: auto;
+    display: block;
 }
 
 .nav-links {
@@ -144,6 +148,13 @@ header {
     margin: 0;
     font-size: clamp(1.5rem, 3.2vw, 2.2rem);
     letter-spacing: -0.02em;
+}
+
+.hero-logo {
+    width: min(700px, 100%);
+    height: auto;
+    display: block;
+    margin: 0 auto;
 }
 
 .hero-header p {
