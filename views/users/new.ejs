@@ -3,13 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up – PantryPal</title>
+    <title>Pantry</title>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
 
 <header>
-    <h1>PantryPal</h1>
+    <nav class="nav">
+        <a href="/" class="nav-logo" aria-label="PantryPal home">
+            <img src="/images/pantrypal-logo-transparent-v3.png" alt="PantryPal" class="nav-logo-image">
+        </a>
+        <ul class="nav-links">
+            <li><a href="/" data-page="home">Home</a></li>
+            <li><a href="/pantry.html" data-page="pantry">Pantry</a></li>
+            <li><a href="/results.html" data-page="results">Results</a></li>
+            <li><a href="/api/planner" data-page="planner">Planner</a></li>
+            <li><a href="/chat" data-page="chat">AI Chat</a></li>
+            <li><a href="/about.html" data-page="about">About</a></li>
+        </ul>
+        <div class="nav-actions" id="nav-auth">
+            <a href="http://localhost:3000/users/login" class="btn auth-btn auth-btn-secondary">Sign In</a>
+            <a href="http://localhost:3000/users/new" class="btn auth-btn">Sign Up</a>
+        </div>
+    </nav>
 </header>
 
 <main class="page center">
