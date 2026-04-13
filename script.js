@@ -195,7 +195,7 @@ async function fetchRecipes() {
                 div.innerHTML = `
                     <h3>${escapeHtml(meal.strMeal)}</h3>
                     <img src="${meal.strMealThumb}" alt="${escapeHtml(meal.strMeal)}" loading="lazy">
-                    <p class="match-info">You can make this now • Uses ${matchCount} ingredient(s)</p>
+                    <p class="match-info">You can make this now</p>
                 `;
 
                 const openRecipe = () => {
