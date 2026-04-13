@@ -15,6 +15,7 @@
             <li><a href="/" data-page="home">Home</a></li>
             <li><a href="/pantry.html" data-page="pantry">Pantry</a></li>
             <li><a href="/results.html" data-page="results">Results</a></li>
+            <li><a href="/planner.html" data-page="planner">Planner</a></li>
             <li><a href="/about.html" data-page="about">About</a></li>
             <li><a href="/chat" data-page="chat">AI Chat</a></li>
         </ul>
@@ -61,7 +62,7 @@
                         <div class="avatar-dropdown">
                             <span class="avatar-dropdown-name">${data.username}</span>
                             <a href="http://localhost:3000/users/profile">Profile</a>
-                            <a href="http://localhost:3000/users/logout">Log Out</a>
+                            <a href="http://localhost:3000/users/logout" onclick="return confirm('Are you sure you want to log out?')">Log Out</a>
                         </div>
                     </div>`;
             }
