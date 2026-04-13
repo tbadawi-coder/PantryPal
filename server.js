@@ -77,9 +77,6 @@ app.get('/about.html', (req, res) => {
     res.sendFile(__dirname + '/views/about.html')
 })
 
-app.get('/planner.html', (req, res) => {
-    res.sendFile(__dirname + '/views/planner.html')
-})
 app.get('/api/me', async (req, res) => {
     if (!req.session.user) return res.json({ loggedIn: false });
     const db = require('./config/db');
