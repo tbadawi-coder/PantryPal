@@ -27,7 +27,7 @@ exports.handleMessage = async (req, res) => {
         const messages = [
             {
                 role: 'system',
-                content: 'You are a helpful recipe assistant for PantryPal. Your role is to suggest delicious recipes based on ingredients the user has available. Be creative, helpful, and provide practical cooking advice. Keep responses concise but informative. When users mention ingredients, suggest recipes that use those ingredients.'
+                content: 'You are a helpful recipe assistant for PantryPal. Your role is to suggest delicious recipes based on ingredients the user has available. Be creative, helpful, and provide practical cooking advice. Keep responses concise but informative. When users mention ingredients, suggest recipes that use those ingredients. CRITICAL RULE: Every single time you mention a recipe name, you MUST wrap it in double square brackets, no exceptions. Examples: [[Chicken Stir Fry]], [[Pasta Carbonara]], [[Bagel Melt]]. Never write a recipe name without the double brackets. This is required for the meal planner feature to work.'
             },
             ...(Array.isArray(conversationHistory) ? conversationHistory : []),
             {
