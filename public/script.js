@@ -331,12 +331,20 @@ async function fetchRecipes() {
             });
 
         const canMakeNow = scoredMeals
-            .filter((item) => item.strictMissingCount === 0 && item.totalRecipeIngredients > 0)
-            .sort((a, b) => b.strictMatchCount - a.strictMatchCount);
+            .filter((item) =>
+                item.totalRecipeIngredients > 0 &&
+                (item.strictMissingCount === 0 || item.smartMissingCount === 0)
+             )
+            .sort((a, b) => {
+                if (b.smartMatchCount !== a.smartMatchCount) {
+                    return b.smartMatchCount - a.smartMatchCount;
+                }
+                return b.strictMatchCount - a.strictMatchCount;
+            });
 
         const almostThere = scoredMeals
             .filter((item) =>
-                item.strictMissingCount > 0 &&
+                item.smartMissingCount > 0 &&
                 item.smartMatchCount >= 2 &&
                 item.smartMissingCount <= 3
             )
