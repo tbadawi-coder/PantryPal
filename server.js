@@ -73,6 +73,10 @@ app.get('/recipe.html', (req, res) => {
     res.sendFile(__dirname + '/views/recipe.html')
 })
 
+app.get('/planner.html', (req, res) => {
+    res.sendFile(__dirname + '/views/planner.html')
+})
+
 app.get('/about.html', (req, res) => {
     res.sendFile(__dirname + '/views/about.html')
 })

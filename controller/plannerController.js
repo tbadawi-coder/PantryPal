@@ -4,6 +4,12 @@ const db = require('../config/db');
 exports.getMeals = async (req, res, next) => {
     try {
         const { startDate, endDate } = req.query;
+        
+        // Validate required query parameters
+        if (!startDate || !endDate) {
+            return res.status(400).json({ success: false, error: 'startDate and endDate are required' });
+        }
+        
         const [rows] = await db.execute(
             `SELECT * FROM meal_plans
              WHERE user_id = ? AND date BETWEEN ? AND ?
@@ -150,6 +156,12 @@ exports.clearWeek = async (req, res, next) => {
 exports.getNotes = async (req, res, next) => {
     try {
         const { startDate, endDate } = req.query;
+        
+        // Validate required query parameters
+        if (!startDate || !endDate) {
+            return res.status(400).json({ success: false, error: 'startDate and endDate are required' });
+        }
+        
         const [rows] = await db.execute(
             `SELECT * FROM slot_notes WHERE user_id = ? AND date BETWEEN ? AND ?`,
             [req.session.user, startDate, endDate]
