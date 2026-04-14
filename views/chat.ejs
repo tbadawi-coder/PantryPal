@@ -23,8 +23,8 @@
             <li><a href="/about.html" data-page="about">About</a></li>
         </ul>
         <div class="nav-actions" id="nav-auth">
-            <a href="http://localhost:3000/users/login" class="btn auth-btn auth-btn-secondary">Sign In</a>
-            <a href="http://localhost:3000/users/new" class="btn auth-btn">Sign Up</a>
+            <a href="/users/login" class="btn auth-btn auth-btn-secondary">Sign In</a>
+            <a href="/users/new" class="btn auth-btn">Sign Up</a>
         </div>
     </nav>
     <div class="hero-header">
@@ -73,7 +73,7 @@
     })();
 </script>
 <script>
-    fetch('http://localhost:3000/api/me')
+    fetch('/api/me')
         .then(res => res.json())
         .then(data => {
             const navAuth = document.getElementById('nav-auth');
@@ -84,8 +84,8 @@
                         <div class="avatar">${initial}</div>
                         <div class="avatar-dropdown">
                             <span class="avatar-dropdown-name">${data.username}</span>
-                            <a href="http://localhost:3000/users/profile">Profile</a>
-                            <a href="http://localhost:3000/users/logout">Log Out</a>
+                            <a href="/users/profile">Profile</a>
+                            <a href="/users/logout">Log Out</a>
                         </div>
                     </div>`;
             }

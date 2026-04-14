@@ -23,8 +23,8 @@
             <li><a href="/about.html" data-page="about">About</a></li>
         </ul>
         <div class="nav-actions" id="nav-auth">
-            <a href="http://localhost:3000/users/login" class="btn auth-btn auth-btn-secondary">Sign In</a>
-            <a href="http://localhost:3000/users/new" class="btn auth-btn">Sign Up</a>
+            <a href="/users/login" class="btn auth-btn auth-btn-secondary">Sign In</a>
+            <a href="/users/new" class="btn auth-btn">Sign Up</a>
         </div>
     </nav>
     <div class="hero-header">
@@ -37,7 +37,7 @@
 
     <!-- Not logged in banner (hidden by default, shown via JS) -->
     <div id="guest-banner" class="guest-banner" style="display:none">
-        <p>Want to save your meal plan? <a href="http://localhost:3000/users/new">Create a free account</a> or <a href="http://localhost:3000/users/login">Sign in</a>.</p>
+        <p>Want to save your meal plan? <a href="/users/new">Create a free account</a> or <a href="/users/login">Sign in</a>.</p>
     </div>
 
     <!-- Week navigation -->
@@ -86,8 +86,8 @@
             <h3>Create an Account to Use the Planner</h3>
             <p class="muted">Save and manage your weekly meal plan by creating a free account.</p>
             <div class="modal-actions">
-                <a href="http://localhost:3000/users/new" class="btn">Create Account</a>
-                <a href="http://localhost:3000/users/login" class="btn btn-outline">Sign In</a>
+                <a href="/users/new" class="btn">Create Account</a>
+                <a href="/users/login" class="btn btn-outline">Sign In</a>
             </div>
             <button type="button" class="modal-close" id="guest-modal-close">✕</button>
         </div>
@@ -103,7 +103,7 @@
     let isLoggedIn = false;
 
     // Check auth state
-    fetch('http://localhost:3000/api/me')
+    fetch('/api/me')
         .then(r => r.json())
         .then(data => {
             isLoggedIn = data.loggedIn;
@@ -115,8 +115,8 @@
                         <div class="avatar">${initial}</div>
                         <div class="avatar-dropdown">
                             <span class="avatar-dropdown-name">${data.username}</span>
-                            <a href="http://localhost:3000/users/profile">Profile</a>
-                            <a href="http://localhost:3000/users/logout" onclick="return confirm('Are you sure you want to log out?')">Log Out</a>
+                            <a href="/users/profile">Profile</a>
+                            <a href="/users/logout" onclick="return confirm('Are you sure you want to log out?')">Log Out</a>
                         </div>
                     </div>`;
             } else {
@@ -197,8 +197,8 @@
 
         try {
             const [mealsRes, notesRes] = await Promise.all([
-                fetch(`http://localhost:3000/api/planner?startDate=${startDate}&endDate=${endDate}`),
-                fetch(`http://localhost:3000/api/planner/notes?startDate=${startDate}&endDate=${endDate}`)
+                fetch(`/api/planner?startDate=${startDate}&endDate=${endDate}`),
+                fetch(`/api/planner/notes?startDate=${startDate}&endDate=${endDate}`)
             ]);
             const mealsData = await mealsRes.json();
             const notesData = await notesRes.json();
@@ -270,7 +270,7 @@
 
     async function deleteMeal(id, date, mealType) {
         try {
-            await fetch(`http://localhost:3000/api/planner/${id}`, { method: 'DELETE' });
+            await fetch(`/api/planner/${id}`, { method: 'DELETE' });
             const el = document.getElementById(`meal-${date}-${mealType}`);
             if (el) {
                 const key = `${date}-${mealType}`;
@@ -310,7 +310,7 @@
         document.getElementById('note-save').addEventListener('click', async () => {
             const notes = document.getElementById('note-input').value.trim();
             try {
-                const res = await fetch('http://localhost:3000/api/planner/notes', {
+                const res = await fetch('/api/planner/notes', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ date, meal_type: mealType, notes })
@@ -407,7 +407,7 @@
         if (!confirmed) return;
         const sunday = new Date(currentMonday);
         sunday.setDate(sunday.getDate() + 6);
-        await fetch('http://localhost:3000/api/planner/clear-week', {
+        await fetch('/api/planner/clear-week', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -432,7 +432,7 @@
         }
         const sunday = new Date(currentMonday);
         sunday.setDate(sunday.getDate() + 6);
-        const res = await fetch(`http://localhost:3000/api/planner?startDate=${formatDateKey(currentMonday)}&endDate=${formatDateKey(sunday)}`);
+        const res = await fetch(`/api/planner?startDate=${formatDateKey(currentMonday)}&endDate=${formatDateKey(sunday)}`);
         const data = await res.json();
         if (!data.meals || data.meals.length === 0) {
             alert('No meals in this week to copy.');
@@ -469,7 +469,7 @@
         const confirmed = confirm(`Paste ${copied.length} meal(s) into this week? Existing meals won't be overwritten.`);
         if (!confirmed) return;
 
-        const res = await fetch('http://localhost:3000/api/planner/paste-week', {
+        const res = await fetch('/api/planner/paste-week', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
