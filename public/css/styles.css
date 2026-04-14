@@ -615,13 +615,6 @@ a.btn:hover {
     opacity: 1;
 }
 
-/*#recipeResults {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 16px;
-    padding: 24px 16px;
-}*/
-
 #recipeDetail {
     padding: 24px 16px;
 }

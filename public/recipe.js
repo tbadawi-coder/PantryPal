@@ -81,10 +81,10 @@ async function fetchRecipeDetail() {
 
 async function handleAddToPlanner(meal) {
     // Check if logged in first
-    const meRes = await fetch('http://localhost:3000/api/me');
+    const meRes = await fetch('/api/me');
     const meData = await meRes.json();
     if (!meData.loggedIn) {
-        window.location.href = 'http://localhost:3000/users/login';
+        window.location.href = '/users/login';
         return;
     }
 
@@ -142,7 +142,7 @@ function showPlannerModal(meal) {
 }
 
 async function saveMeal(meal, date, mealType, confirmed = false) {
-    const res = await fetch('http://localhost:3000/api/planner', {
+    const res = await fetch('/api/planner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
