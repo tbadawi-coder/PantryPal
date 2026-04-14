@@ -615,12 +615,12 @@ a.btn:hover {
     opacity: 1;
 }
 
-#recipeResults {
+/*#recipeResults {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 16px;
     padding: 24px 16px;
-}
+}*/
 
 #recipeDetail {
     padding: 24px 16px;
@@ -643,7 +643,8 @@ a.btn:hover {
 
 .recipe-card img {
     width: 100%;
-    height: auto;
+    height: 180px;
+    object-fit: cover;
     border-radius: 12px;
     display: block;
     margin-top: 10px;
@@ -698,6 +699,48 @@ a.btn:hover {
     line-height: 1.8;
     white-space: pre-line;
     margin: 0;
+}
+
+.results-sections {
+    /*display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;*/
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+.results-column {
+    /*display: flex;
+    flex-direction: column;
+    gap: 16px;*/
+    width: 100%
+}
+
+.results-heading {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+    gap: 20px;
+    justify-content: start;
+}
+
+@media (max-width: 900px) {
+    .recipe-grid {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .recipe-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 720px) {

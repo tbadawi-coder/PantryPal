@@ -14,12 +14,16 @@ function escapeHtml(text) {
     }[c]));
 }
 
+function normalizeIngredient(text) {
+    return String(text).trim().toLowerCase();
+}
+
 // Add ingredient
 function addIngredient() {
     const input = document.getElementById("ingredientInput");
     if (!input) return;
 
-    const value = input.value.trim().toLowerCase();
+    const value = normalizeIngredient(input.value);
 
     if (value !== "" && !ingredients.includes(value)) {
         ingredients.push(value);
@@ -58,6 +62,18 @@ function goToResults() {
     window.location.href = "results.html";
 }
 
+//Extract the full ingredient list from the MealDB API response
+function extractIngredients(meal) {
+    const recipeIngredients = [];
+    for (let i = 1; i <= 20; i++) {
+        const ingredient = meal[`strIngredient${i}`];
+        if (ingredient && ingredient.trim() !== "") {
+            recipeIngredients.push(normalizeIngredient(ingredient));
+        }
+    }
+    return recipeIngredients;
+}
+
 // Fetch recipes from MealDB using multiple ingredients
 async function fetchRecipes() {
     const results = document.getElementById("recipeResults");
@@ -71,85 +87,169 @@ async function fetchRecipes() {
     results.innerHTML = "<p class='muted'>Loading recipes...</p>";
 
     try {
-
-        // Make a separate API call for each ingredient
-        const fetchPromises = ingredients.map((ingredient) =>
+        const candidateFetches = ingredients.map((ingredient) =>
             fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(ingredient)}`)
                 .then((res) => {
                     if (!res.ok) {
-                        throw new Error('Request failed for ingredient: ${ingredient}');
+                        throw new Error(`Failed to fetch recipes for ingredient: ${ingredient}`);
                     }
                     return res.json();
                 })
         );
 
-        const allResults = await Promise.all(fetchPromises);
-        //Count how many ingredients searches each meal appears
-        const mealMap = {};
+        const candidateResults = await Promise.all(candidateFetches);
 
-        allResults.forEach((data) => {
-            if(!data.meals) return;
-            data.meals.forEach(meal => {
-                if (!mealMap[meal.idMeal]) {
-                    mealMap[meal.idMeal] = { meal: meal, count: 1 };
-                } else {
-                    mealMap[meal.idMeal].count++;
+        const candidateMealMap = {};
+
+        candidateResults.forEach((data) => {
+            if (!data.meals) return;
+            data.meals.forEach((meal) => {
+                if (!candidateMealMap[meal.idMeal]) {
+                    candidateMealMap[meal.idMeal] = meal;
                 }
             });
         });
 
-        const mealsArray = Object.values(mealMap);
+        const candidateMeals = Object.values(candidateMealMap);
 
-        if (mealsArray.length === 0) {
+        if (candidateMeals.length === 0) {
             results.innerHTML = "<p class='muted'>No recipes found.</p>";
             return;
         }
 
-        //Sorting by highest count of ingredient matches
-        mealsArray.sort((a, b) => b.count - a.count);
+        const detailFetches = candidateMeals.map((meal) =>
+            fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${meal.idMeal}`)
+                .then((res) => {
+                    if (!res.ok) {
+                        throw new Error(`Failed to fetch details for meal ID: ${meal.idMeal}`);
+                    }
+                    return res.json();
+                })
+        );
+
+        const detailResults = await Promise.all(detailFetches);
+
+        const pantrySet = new Set(ingredients);
+
+        const scoredMeals = detailResults
+            .map((data) => (data.meals && data.meals[0] ? data.meals[0] : null))
+            .filter(Boolean)
+            .map((meal) => {
+                const recipeIngredients = extractIngredients(meal);
+
+                const matchedIngredients = recipeIngredients.filter((ingredient) =>
+                    pantrySet.has(ingredient)
+                );
+
+                const missingIngredients = recipeIngredients.filter((ingredient) =>
+                    !pantrySet.has(ingredient)
+                );
+
+                return {
+                    meal,
+                    matchCount: matchedIngredients.length,
+                    missingCount: missingIngredients.length,
+                    matchedIngredients,
+                    missingIngredients,
+                    totalRecipeIngredients: recipeIngredients.length
+                };
+            });
+
+        const filteredMeals = scoredMeals.filter((item) => item.matchCount > 0);
+
+        if (filteredMeals.length === 0) {
+            results.innerHTML = "<p class='muted'>No recipes found with your pantry ingredients.</p>";
+            return;
+        }
+
+        const canMakeNow = filteredMeals
+            .filter((item) => item.missingCount === 0)
+            .sort((a, b) => b.matchCount - a.matchCount);
+
+        const almostThere = filteredMeals
+            .filter((item) => item.missingCount > 0 && item.missingCount <= 3)
+            .sort((a, b) => {
+                if (a.missingCount !== b.missingCount) {
+                    return a.missingCount - b.missingCount;
+                }
+                return b.matchCount - a.matchCount;
+            });
 
         results.innerHTML = "";
 
-        let shownCount = 0;
-
-        mealsArray.forEach(item => {
-            const meal = item.meal;
-            const matchCount = item.count;
-            
-            //how many ingrediants from pantry are NOT used by the recipe
-            const missingCount = ingredients.length - matchCount;
-
-            //Show recipes missing 3 or fewer ingredients
-            if(missingCount > 3) return;
-
-            const div = document.createElement("div");
-            div.classList.add("recipe-card");
-            div.innerHTML = `
-                <h3>${escapeHtml(meal.strMeal)}</h3>
-                <img src="${meal.strMealThumb}" alt="${escapeHtml(meal.strMeal)}" loading="lazy">
-                <p class="match-info">Matches ${matchCount} ingredient(s) | Missing ${missingCount} ingredient(s)</p>
-            `;
-
-            const openRecipe = () => {
-                localStorage.setItem("selectedMealId", meal.idMeal);
-                window.location.href = "recipe.html";
-            };
-            div.addEventListener("click", openRecipe);
-            div.tabIndex = 0;
-            div.addEventListener("keydown", (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    openRecipe();
-                }
-            });
-            results.appendChild(div);
-            shownCount++;
-        });
-
-        if (shownCount === 0) {
-            results.innerHTML = "<p class='muted'>No recipes found with 3 or fewer missing pantry ingredients.</p>";
+        if (canMakeNow.length === 0 && almostThere.length === 0) {
+            results.innerHTML = "<p class='muted'>No recipes found.</p>";
+            return;
         }
 
+        if (canMakeNow.length > 0) {
+            const makeNowHeader = document.createElement("h2");
+            makeNowHeader.textContent = "Can Make Now";
+            results.appendChild(makeNowHeader);
+
+            canMakeNow.forEach((item) => {
+                const { meal, matchCount } = item;
+
+                const div = document.createElement("div");
+                div.classList.add("recipe-card");
+                div.innerHTML = `
+                    <h3>${escapeHtml(meal.strMeal)}</h3>
+                    <img src="${meal.strMealThumb}" alt="${escapeHtml(meal.strMeal)}" loading="lazy">
+                    <p class="match-info">You can make this now</p>
+                `;
+
+                const openRecipe = () => {
+                    localStorage.setItem("selectedMealId", meal.idMeal);
+                    window.location.href = "recipe.html";
+                };
+
+                div.addEventListener("click", openRecipe);
+                div.tabIndex = 0;
+                div.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openRecipe();
+                    }
+                });
+
+                results.appendChild(div);
+            });
+        }
+
+        if (almostThere.length > 0) {
+            const almostHeader = document.createElement("h2");
+            almostHeader.textContent = "Almost There";
+            results.appendChild(almostHeader);
+
+            almostThere.forEach((item) => {
+                const { meal, matchCount, missingCount, missingIngredients } = item;
+
+                const div = document.createElement("div");
+                div.classList.add("recipe-card");
+                div.innerHTML = `
+                    <h3>${escapeHtml(meal.strMeal)}</h3>
+                    <img src="${meal.strMealThumb}" alt="${escapeHtml(meal.strMeal)}" loading="lazy">
+                    <p class="match-info">Matches ${matchCount} ingredient(s) • Missing ${missingCount}</p>
+                    <p class="muted">Missing: ${escapeHtml(missingIngredients.join(", "))}</p>
+                `;
+
+                const openRecipe = () => {
+                    localStorage.setItem("selectedMealId", meal.idMeal);
+                    window.location.href = "recipe.html";
+                };
+
+                div.addEventListener("click", openRecipe);
+                div.tabIndex = 0;
+                div.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openRecipe();
+                    }
+                });
+
+                results.appendChild(div);
+            });
+        }
     } catch (error) {
         results.innerHTML = "<p class='muted'>Error fetching recipes.</p>";
         console.error(error);

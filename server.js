@@ -89,6 +89,23 @@ app.get('/api/me', async (req, res) => {
     res.json({ loggedIn: true, username });
 });
 
+app.get('/api/meal-details/:id', async (req, res) => {
+    try {
+        const mealId = req.params.id;
+        const response = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`);
+
+        if (!response.ok) {
+            return res.status(response.status).json({ error: 'Failed to fetch meal details' });
+        }
+
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('Meal details proxy error:', error);
+        res.status(500).json({ error: 'Server error fetching meal details' });
+    }
+});
+
 app.use('/users', userRoutes);
 app.use('/chat', chatRoutes);
 app.use('/api/planner', plannerRoutes);
