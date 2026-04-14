@@ -50,8 +50,9 @@ header {
 }
 
 .nav-logo-image {
-    height: 48px;
+    height: 125px;
     width: auto;
+    object-fit: contain;
     display: block;
 }
 
