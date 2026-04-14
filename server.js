@@ -81,12 +81,18 @@ app.get('/about.html', (req, res) => {
     res.sendFile(__dirname + '/views/about.html')
 })
 
-app.get('/api/me', async (req, res) => {
+app.get('/api/me', async (req, res, next) => {
     if (!req.session.user) return res.json({ loggedIn: false });
-    const db = require('./config/db');
-    const [rows] = await db.execute('SELECT username FROM users WHERE id = ?', [req.session.user]);
-    const username = rows[0] ? rows[0].username : '';
-    res.json({ loggedIn: true, username });
+
+    try{
+        const [rows] = await db.execute('SELECT username FROM users WHERE id = ?', [req.session.user]);
+        const username = rows[0] ? rows[0].username : '';
+        res.json({ loggedIn: true, username });
+    }catch (err){
+        next(err);
+    }
+
+
 });
 
 app.get('/api/meal-details/:id', async (req, res) => {
@@ -143,6 +149,6 @@ app.use((err, req, res, next) => {
 //     });
 // });
 
-app.listen(port, host, () =>{
+app.listen(port, () =>{
     console.log(`Server is running on port ${port}`)
 });
