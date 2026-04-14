@@ -117,7 +117,7 @@ function deleteIngredient(index) {
 
 // Go to results page
 function goToResults() {
-    window.location.href = "results.html";
+    window.location.href = "/results.html";
 }
 
 // Extract full ingredient list from MealDB response
@@ -155,7 +155,7 @@ function makeRecipeCard(item, mode = "smart") {
 
     const openRecipe = () => {
         localStorage.setItem("selectedMealId", meal.idMeal);
-        window.location.href = "recipe.html";
+        window.location.href = "/recipe.html";
     };
 
     div.addEventListener("click", openRecipe);
