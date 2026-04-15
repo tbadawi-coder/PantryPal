@@ -479,20 +479,101 @@ header {
     margin: 0 auto;
 }
 
-.home-graphic {
+/* Home: four full-width PNGs stacked; CTA card sits on first image */
+.home-page-main {
     width: 100%;
-    max-width: 680px;
-    height: auto;
-    margin-top: 0;
-    border-radius: 0;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: none;
+    margin: 0;
+    padding: 0;
 }
 
-.home-graphic-section {
-    padding-top: 22px;
-    padding-bottom: 18px;
+.home-svg-banner {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    overflow: visible;
+}
+
+.home-graphic-hero {
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.home-graphic-hero-img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.home-graphic-hero-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(16px, 4vw, 36px);
+    pointer-events: none;
+}
+
+.home-graphic-hero-panel .card {
+    pointer-events: auto;
+}
+
+/* Third banner: CTA on notepad (left half), below baked-in copy */
+.home-graphic-planner {
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.home-graphic-planner-img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.home-graphic-planner-panel {
+    position: absolute;
+    left: calc(3% + 6px);
+    width: 48%;
+    top: 64%;
+    bottom: 4%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 0 clamp(12px, 3vw, 22px);
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.home-graphic-planner-panel .btn {
+    pointer-events: auto;
+    text-align: center;
+    max-width: 100%;
+}
+
+/* flex-shrink: 0 — avoid flex column squishing tall graphics */
+.home-svg-banner-img {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0;
+    flex-shrink: 0;
 }
 
 a.btn,

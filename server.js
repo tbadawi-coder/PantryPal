@@ -16,8 +16,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-let port = 3000;
-let host = 'localhost';
+const port = Number(process.env.PORT) || 3000;
+const host = process.env.HOST || "0.0.0.0";
 
 app.set('view engine', 'ejs');
 
@@ -149,6 +149,6 @@ app.use((err, req, res, next) => {
 //     });
 // });
 
-app.listen(port, () =>{
+app.listen(port, host, () =>{
     console.log(`Server is running on port ${port}`)
 });
