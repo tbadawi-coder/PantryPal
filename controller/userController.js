@@ -37,9 +37,8 @@ exports.createUser = async (req, res, next) => {
 
     }catch(error){
         if(error.errno == 1062){
-            const err = new Error('Email already in use' + email)
-            err.status = 409;
-            return next(err)
+            req.flash('error', 'An account with that email already exists');
+            return req.session.save(() => res.redirect('/users/new'));
         }
         next(error)
     }
