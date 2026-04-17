@@ -18,61 +18,114 @@ function normalizeIngredient(text) {
     return String(text).trim().toLowerCase();
 }
 
-function ingredientTokens(text) {
-    const stopWords = new Set([
-        "fresh", "dried", "ground", "chopped", "diced", "sliced", "minced",
-        "large", "small", "medium", "extra", "virgin", "boneless", "skinless",
-        "optional", "to", "taste", "of", "and"
-    ]);
+const INGREDIENT_STOP_WORDS = new Set([
+    "fresh", "dried", "ground", "chopped", "diced", "sliced", "minced",
+    "large", "small", "medium", "extra", "virgin", "boneless", "skinless",
+    "optional", "to", "taste", "of", "and"
+]);
 
-    return normalizeIngredient(text)
+/** @param {string} norm already lowercased / trimmed */
+function ingredientTokensNormalized(norm) {
+    return norm
         .replace(/[(),.-]/g, " ")
         .split(/\s+/)
         .filter(Boolean)
-        .filter((word) => !stopWords.has(word));
+        .filter((word) => !INGREDIENT_STOP_WORDS.has(word));
 }
 
-// Strict matching for "Can Make Now" Section
-function isUltraStrictMatch(recipeIngredient, pantryIngredient) {
-    const recipeNorm = normalizeIngredient(recipeIngredient);
-    const pantryNorm = normalizeIngredient(pantryIngredient);
+function buildPantryProfiles(pantryNorms) {
+    return pantryNorms.map((norm) => {
+        const words = ingredientTokensNormalized(norm);
+        return { norm, words };
+    });
+}
 
+function matchesUltraStrictPrecomputed(recipeNorm, recipeWords, recipeWordSet, pantry) {
+    const { norm: pantryNorm, words: pantryWords } = pantry;
     if (!recipeNorm || !pantryNorm) return false;
-
-    const recipeWords = ingredientTokens(recipeNorm);
-    const pantryWords = ingredientTokens(pantryNorm);
-
     if (recipeWords.length === 0 || pantryWords.length === 0) return false;
-
     if (recipeNorm === pantryNorm) return true;
-
     if (pantryWords.length === 1) {
         return recipeWords[0] === pantryWords[0];
     }
-
-    return pantryWords.every((word) => recipeWords.includes(word));
+    return pantryWords.every((word) => recipeWordSet.has(word));
 }
 
-// Smarter matching for "Almost There" Section
-function isSmartMatch(recipeIngredient, pantryIngredient) {
-    const recipeNorm = normalizeIngredient(recipeIngredient);
-    const pantryNorm = normalizeIngredient(pantryIngredient);
-
+function matchesSmartPrecomputed(recipeNorm, recipeWords, recipeWordSet, pantry) {
+    const { norm: pantryNorm, words: pantryWords } = pantry;
     if (!recipeNorm || !pantryNorm) return false;
-
     if (recipeNorm === pantryNorm) return true;
-
-    const recipeWords = ingredientTokens(recipeNorm);
-    const pantryWords = ingredientTokens(pantryNorm);
-
     if (recipeWords.length === 0 || pantryWords.length === 0) return false;
-
     if (pantryWords.length === 1) {
-        return recipeWords.includes(pantryWords[0]);
+        return recipeWordSet.has(pantryWords[0]);
+    }
+    let overlap = 0;
+    for (let i = 0; i < pantryWords.length; i++) {
+        if (recipeWordSet.has(pantryWords[i])) overlap++;
+    }
+    return overlap >= Math.ceil(pantryWords.length / 2);
+}
+
+function scoreRecipeAgainstPantry(recipeIngredients, pantryProfiles) {
+    const strictMatchedIngredients = [];
+    const strictMissingIngredients = [];
+    const smartMatchedIngredients = [];
+    const smartMissingIngredients = [];
+
+    for (let r = 0; r < recipeIngredients.length; r++) {
+        const recipeIng = recipeIngredients[r];
+        const recipeWords = ingredientTokensNormalized(recipeIng);
+        const recipeWordSet = new Set(recipeWords);
+
+        let strictOk = false;
+        let smartOk = false;
+        for (let p = 0; p < pantryProfiles.length; p++) {
+            const pantry = pantryProfiles[p];
+            if (!strictOk && matchesUltraStrictPrecomputed(recipeIng, recipeWords, recipeWordSet, pantry)) {
+                strictOk = true;
+            }
+            if (!smartOk && matchesSmartPrecomputed(recipeIng, recipeWords, recipeWordSet, pantry)) {
+                smartOk = true;
+            }
+            if (strictOk && smartOk) break;
+        }
+
+        if (strictOk) strictMatchedIngredients.push(recipeIng);
+        else strictMissingIngredients.push(recipeIng);
+        if (smartOk) smartMatchedIngredients.push(recipeIng);
+        else smartMissingIngredients.push(recipeIng);
     }
 
-    const overlapCount = pantryWords.filter((word) => recipeWords.includes(word)).length;
-    return overlapCount >= Math.ceil(pantryWords.length / 2);
+    return {
+        recipeIngredients,
+        strictMatchedIngredients,
+        strictMissingIngredients,
+        smartMatchedIngredients,
+        smartMissingIngredients,
+        strictMatchCount: strictMatchedIngredients.length,
+        strictMissingCount: strictMissingIngredients.length,
+        smartMatchCount: smartMatchedIngredients.length,
+        smartMissingCount: smartMissingIngredients.length,
+        totalRecipeIngredients: recipeIngredients.length
+    };
+}
+
+async function mapWithConcurrency(items, concurrency, mapper) {
+    if (items.length === 0) return [];
+    const limit = Math.max(1, Math.min(concurrency, items.length));
+    const out = new Array(items.length);
+    let next = 0;
+
+    const worker = async () => {
+        while (true) {
+            const i = next++;
+            if (i >= items.length) return;
+            out[i] = await mapper(items[i], i);
+        }
+    };
+
+    await Promise.all(Array.from({ length: limit }, () => worker()));
+    return out;
 }
 
 // Add ingredient
@@ -261,73 +314,38 @@ async function fetchRecipes() {
             return;
         }
 
-        const detailResults = [];
+        const MEAL_DETAIL_CONCURRENCY = 12;
 
-        for (const meal of candidateMeals) {
-            try {
-                const res = await fetch(`/api/meal-details/${meal.idMeal}`);
-
-                if (!res.ok) {
-                    console.warn(`Skipped meal ${meal.idMeal} - status ${res.status}`);
-                    continue;
+        const detailResults = (
+            await mapWithConcurrency(candidateMeals, MEAL_DETAIL_CONCURRENCY, async (meal) => {
+                try {
+                    const res = await fetch(`/api/meal-details/${meal.idMeal}`);
+                    if (!res.ok) {
+                        console.warn(`Skipped meal ${meal.idMeal} - status ${res.status}`);
+                        return null;
+                    }
+                    const data = await res.json();
+                    return data.meals && data.meals[0] ? data : null;
+                } catch (error) {
+                    console.error(`Failed to fetch details for meal ID: ${meal.idMeal}`, error);
+                    return null;
                 }
-
-                const data = await res.json();
-
-                if (data.meals && data.meals[0]) {
-                    detailResults.push(data);
-                }
-
-                /*await new Promise((resolve) => setTimeout(resolve, 100));*/
-            } catch (error) {
-                console.error(`Failed to fetch details for meal ID: ${meal.idMeal}`, error);
-            }
-        }
+            })
+        ).filter(Boolean);
 
         if (detailResults.length === 0) {
             results.innerHTML = "<p class='muted'>Could not load recipe details right now. Please try again.</p>";
             return;
         }
 
-        const scoredMeals = detailResults
-            .map((data) => (data.meals && data.meals[0] ? data.meals[0] : null))
-            .filter(Boolean)
-            .map((meal) => {
-                const recipeIngredients = extractIngredients(meal);
+        const pantryProfiles = buildPantryProfiles(ingredients);
 
-                const strictMatchedIngredients = recipeIngredients.filter((ingredient) =>
-                    ingredients.some((pantryItem) => isUltraStrictMatch(ingredient, pantryItem))
-                );
-
-                const strictMissingIngredients = recipeIngredients.filter((ingredient) =>
-                    !ingredients.some((pantryItem) => isUltraStrictMatch(ingredient, pantryItem))
-                );
-
-                const smartMatchedIngredients = recipeIngredients.filter((ingredient) =>
-                    ingredients.some((pantryItem) => isSmartMatch(ingredient, pantryItem))
-                );
-
-                const smartMissingIngredients = recipeIngredients.filter((ingredient) =>
-                    !ingredients.some((pantryItem) => isSmartMatch(ingredient, pantryItem))
-                );
-
-                return {
-                    meal,
-                    recipeIngredients,
-
-                    strictMatchCount: strictMatchedIngredients.length,
-                    strictMissingCount: strictMissingIngredients.length,
-                    strictMatchedIngredients,
-                    strictMissingIngredients,
-
-                    smartMatchCount: smartMatchedIngredients.length,
-                    smartMissingCount: smartMissingIngredients.length,
-                    smartMatchedIngredients,
-                    smartMissingIngredients,
-
-                    totalRecipeIngredients: recipeIngredients.length
-                };
-            });
+        const scoredMeals = detailResults.map((data) => {
+            const meal = data.meals[0];
+            const recipeIngredients = extractIngredients(meal);
+            const scored = scoreRecipeAgainstPantry(recipeIngredients, pantryProfiles);
+            return { meal, ...scored };
+        });
 
         const canMakeNow = scoredMeals
             .filter((item) =>
