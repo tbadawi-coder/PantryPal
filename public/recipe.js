@@ -20,7 +20,7 @@ async function fetchRecipeDetail() {
     }
 
     try {
-        const response = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`);
+        const response = await fetch(`/api/meal-details/${mealId}`);
         const data = await response.json();
         const meal = data && data.meals ? data.meals[0] : null;
         if (!meal) {

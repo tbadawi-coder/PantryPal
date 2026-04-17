@@ -254,7 +254,6 @@ async function fetchRecipes() {
             });
         });
 
-        // Limit to avoid 429 errors(very long load times)
         const candidateMeals = Object.values(candidateMealMap);
 
         if (candidateMeals.length === 0) {
@@ -279,7 +278,7 @@ async function fetchRecipes() {
                     detailResults.push(data);
                 }
 
-                await new Promise((resolve) => setTimeout(resolve, 100));
+                /*await new Promise((resolve) => setTimeout(resolve, 100));*/
             } catch (error) {
                 console.error(`Failed to fetch details for meal ID: ${meal.idMeal}`, error);
             }
@@ -346,7 +345,7 @@ async function fetchRecipes() {
             .filter((item) =>
                 item.smartMissingCount > 0 &&
                 item.smartMatchCount >= 2 &&
-                item.smartMissingCount <= 3
+                item.smartMissingCount <= 5
             )
             .sort((a, b) => {
                 if (a.smartMissingCount !== b.smartMissingCount) {
