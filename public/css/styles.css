@@ -564,6 +564,10 @@ header {
     pointer-events: auto;
     text-align: center;
     max-width: 100%;
+    width: clamp(120px, 40vw, 220px);
+    padding: clamp(6px, 1.6vw, 10px) clamp(10px, 2.4vw, 16px);
+    font-size: clamp(0.75rem, 2.1vw, 0.98rem);
+    line-height: 1.15;
 }
 
 /* flex-shrink: 0 — avoid flex column squishing tall graphics */
@@ -842,6 +846,10 @@ a.btn:hover {
     a.btn,
     button {
         width: 100%;
+    }
+
+    .home-graphic-planner-panel .btn {
+        width: clamp(110px, 44vw, 180px);
     }
 
     #recipeResults {
